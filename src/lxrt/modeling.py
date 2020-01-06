@@ -518,9 +518,10 @@ class VisualFeatEncoder(nn.Module):
 
 
 class LXRTEncoder(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, model_type):
         super().__init__()
-
+        self.model_type = model_type
+        
         # Obj-level image embedding layer
         self.visn_fc = VisualFeatEncoder(config)
 
@@ -548,20 +549,31 @@ class LXRTEncoder(nn.Module):
         # Run visual embedding layer
         # Note: Word embedding layer was executed outside this module.
         #       Keep this design to allow loading BERT weights.
-        visn_feats = self.visn_fc(visn_feats)
 
-        # Run language layers
-        for layer_module in self.layer:
-            lang_feats = layer_module(lang_feats, lang_attention_mask)
+        # ['full', 'concat', 'text_only', 'image_only']
 
-        # Run relational layers
-        for layer_module in self.r_layers:
-            visn_feats = layer_module(visn_feats, visn_attention_mask)
-
-        # Run cross-modality layers
-        for layer_module in self.x_layers:
-            lang_feats, visn_feats = layer_module(lang_feats, lang_attention_mask,
-                                                  visn_feats, visn_attention_mask)
+        # should we do visual processing?
+        if self.model_type in ['full', 'concat', 'image_only']:
+            visn_feats = self.visn_fc(visn_feats)
+            # Run relational layers
+            for layer_module in self.r_layers:
+                visn_feats = layer_module(visn_feats, visn_attention_mask)
+        else:
+            visn_feats = None
+                
+        # should we do textual processing?
+        if self.model_type in ['full', 'concat', 'text_only']:
+            # Run language layers
+            for layer_module in self.layer:
+                lang_feats = layer_module(lang_feats, lang_attention_mask)
+        else:
+            lang_feats = None
+                
+        # should we run cross-modal processing?
+        if self.model_type == 'full':
+            for layer_module in self.x_layers:
+                lang_feats, visn_feats = layer_module(lang_feats, lang_attention_mask,
+                                                      visn_feats, visn_attention_mask)
 
         return lang_feats, visn_feats
 
@@ -835,11 +847,33 @@ class BertPreTrainedModel(nn.Module):
 class LXRTModel(BertPreTrainedModel):
     """LXRT Model."""
 
-    def __init__(self, config):
+    def __init__(self, config, model_type='full'):
         super().__init__(config)
         self.embeddings = BertEmbeddings(config)
-        self.encoder = LXRTEncoder(config)
+        self.encoder = LXRTEncoder(config, model_type)
         self.pooler = BertPooler(config)
+        self.language_only_pooler = BertPooler(config)
+        self.vision_only_pooler = BertPooler(config)
+        self.model_type = model_type
+        if self.model_type not in ['full', 'concat', 'text_only', 'image_only']:
+            raise NotImplementedError(
+                '{} not implemented model type'.format(self.model_type))
+
+        hid_dim = config.hidden_size
+        self.language_fc = nn.Sequential(
+            nn.Linear(hid_dim, hid_dim),
+            GeLU(),
+            BertLayerNorm(hid_dim, eps=1e-12),
+            nn.Linear(hid_dim, int(hid_dim/2))
+        )
+        
+        self.vision_fc = nn.Sequential(
+            nn.Linear(hid_dim, hid_dim),
+            GeLU(),
+            BertLayerNorm(hid_dim, eps=1e-12),
+            nn.Linear(hid_dim, int(hid_dim/2)),
+        )
+        
         self.apply(self.init_bert_weights)
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None,
@@ -881,7 +915,17 @@ class LXRTModel(BertPreTrainedModel):
             extended_attention_mask,
             visn_feats=visual_feats,
             visn_attention_mask=extended_visual_attention_mask)
-        pooled_output = self.pooler(lang_feats)
+
+        if self.model_type == 'full':
+            pooled_output = self.pooler(lang_feats)
+        elif self.model_type == 'concat':                                  
+            language_pooled = self.language_fc(self.language_only_pooler(lang_feats))
+            vision_pooled = self.vision_fc(self.vision_only_pooler(visn_feats))
+            pooled_output = torch.cat((language_pooled, vision_pooled), 1)
+        elif self.model_type == 'text_only':
+            pooled_output = self.language_only_pooler(lang_feats)
+        elif self.model_type == 'vision_only':
+            pooled_output = self.vision_only_pooler(visn_feats)
 
         return (lang_feats, visn_feats), pooled_output
 
@@ -993,15 +1037,16 @@ class LXRTFeatureExtraction(BertPreTrainedModel):
     """
     BERT model for classification.
     """
-    def __init__(self, config, mode='lxr'):
+    def __init__(self, config, mode='lxr', model_type='full'):
         """
 
         :param config:
         :param mode:  Number of visual layers
         """
         super().__init__(config)
-        self.bert = LXRTModel(config)
+        self.bert = LXRTModel(config, model_type=model_type)
         self.mode = mode
+        self.model_type = model_type
         self.apply(self.init_bert_weights)
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, visual_feats=None,
