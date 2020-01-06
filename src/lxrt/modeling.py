@@ -883,10 +883,6 @@ class LXRTModel(BertPreTrainedModel):
             visn_attention_mask=extended_visual_attention_mask)
         pooled_output = self.pooler(lang_feats)
 
-        print(lang_feats)
-        print(visn_feats)
-        quit()
-        
         return (lang_feats, visn_feats), pooled_output
 
 

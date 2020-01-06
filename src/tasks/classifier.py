@@ -4,6 +4,7 @@
 import sys
 import os
 sys.path.append(os.getcwd() + '/src/')
+import json
 
 import collections
 
@@ -35,9 +36,14 @@ def get_tuple(splits: str, bs:int, shuffle=False, drop_last=False) -> DataTuple:
 
 class Classifier:
     def __init__(self):
-        self.train_tuple = get_tuple(
-            args.train_json, bs=args.batch_size, shuffle=True, drop_last=True
-        )
+
+        if args.train_json != "-1":
+            self.train_tuple = get_tuple(
+                args.train_json, bs=args.batch_size, shuffle=True, drop_last=True
+            )
+        else:
+            self.train_tuple = None
+        
         if args.valid_json != "-1":
             valid_bsize = 2048 if args.multiGPU else 512
             self.valid_tuple = get_tuple(
@@ -47,7 +53,9 @@ class Classifier:
         else:
             self.valid_tuple = None
 
-        self.model = ClassifierModel(self.train_tuple.dataset.num_answers)
+        n_answers = len(json.load(open(args.ans2label)))
+
+        self.model = ClassifierModel(n_answers)
 
         # Load pre-trained weights
         if args.load_lxmert is not None:
@@ -58,22 +66,23 @@ class Classifier:
         if args.multiGPU:
             self.model.lxrt_encoder.multi_gpu()
 
-        # Losses and optimizer
-        self.bce_loss = nn.BCEWithLogitsLoss()
-        self.mce_loss = nn.CrossEntropyLoss(ignore_index=-1)
-        if 'bert' in args.optim:
-            batch_per_epoch = len(self.train_tuple.loader)
-            t_total = int(batch_per_epoch * args.epochs)
-            print("Total Iters: %d" % t_total)
-            from lxrt.optimization import BertAdam
-            self.optim = BertAdam(list(self.model.parameters()),
-                                  lr=args.lr,
-                                  warmup=0.1,
-                                  t_total=t_total)
-        else:
-            self.optim = args.optimizer(list(self.model.parameters()), args.lr)
+        # Losses and optimizer, only if training
+        if args.train_json != "-1":
+            self.bce_loss = nn.BCEWithLogitsLoss()
+            self.mce_loss = nn.CrossEntropyLoss(ignore_index=-1)
+            if 'bert' in args.optim:
+                batch_per_epoch = len(self.train_tuple.loader)
+                t_total = int(batch_per_epoch * args.epochs)
+                print("Total Iters: %d" % t_total)
+                from lxrt.optimization import BertAdam
+                self.optim = BertAdam(list(self.model.parameters()),
+                                      lr=args.lr,
+                                      warmup=0.1,
+                                      t_total=t_total)
+            else:
+                self.optim = args.optimizer(list(self.model.parameters()), args.lr)
 
-        self.output = args.output
+        self.output = args.output_dir
         os.makedirs(self.output, exist_ok=True)
 
     def train(self, train_tuple, eval_tuple):
@@ -91,10 +100,11 @@ class Classifier:
                 feats, boxes, target = feats.cuda(), boxes.cuda(), target.cuda()
                 logit = self.model(feats, boxes, sent)
                 assert logit.dim() == target.dim() == 2
-                if args.mce_loss:
+
+                if logit.size(1) > 1: # multiclass, mce loss
                     max_value, target = target.max(1)
                     loss = self.mce_loss(logit, target) * logit.size(1)
-                else:
+                else: # binary
                     loss = self.bce_loss(logit, target)
                     loss = loss * logit.size(1)
 
@@ -153,9 +163,9 @@ class Classifier:
     def oracle_score(data_tuple):
         dset, loader, evaluator = data_tuple
         instance_id2pred = {}
-        for i, (instance_id2pred, feats, boxes, sent, target) in enumerate(loader):
+        for i, (instance_ids, feats, boxes, sent, target) in enumerate(loader):
             _, label = target.max(1)
-            for instance_id, l in zip(ques_id, label.cpu().numpy()):
+            for instance_id, l in zip(instance_ids, label.cpu().numpy()):
                 ans = dset.label2ans[l]
                 instance_id2pred[instance_id] = ans
         return evaluator.evaluate(instance_id2pred)
@@ -187,11 +197,12 @@ if __name__ == "__main__":
     classifier = Classifier()
 
     # Load Model
-    if args.load is not None:
-        classifier.load(args.load)
+    if args.load_finetune is not None:
+        classifier.load(args.load_finetune)
 
-
-    if args.train != '-1':
+    trained_this_run = False
+    if args.train_json != '-1':
+        trained_this_run = True
         print('Splits in Train data:', classifier.train_tuple.dataset.splits)
         if classifier.valid_tuple is not None:
             print('Splits in Valid data:', classifier.valid_tuple.dataset.splits)
@@ -200,13 +211,16 @@ if __name__ == "__main__":
             print('Warning: we are not using a validation set! this is discouraged.')
         classifier.train(classifier.train_tuple, classifier.valid_tuple)
         
-    if args.test != '-1':
+    if args.test_json != '-1':
+        if trained_this_run:
+            print('loading from best!')
+            classifier.load(os.path.join(classifier.output, 'BEST'))
         print('Testing!')
         args.fast = args.tiny = False       # Always loading all data in test
         classifier.predict(
-            get_tuple(args.test, bs=args.batch_size,
+            get_tuple(args.test_json, bs=args.batch_size,
                       shuffle=False, drop_last=False),
-            dump=os.path.join(args.output_dir, args.output_file)
+            dump=os.path.join(args.output_dir, 'test_predictions.json')
         )
         
 

@@ -52,21 +52,20 @@ def parse_args():
                         'e.g., "data/feats1.tsv,data/feats2.tsv" or "vg_gqa_obj36.tsv"')
 
     # Training Hyper-parameters
-    parser.add_argument('--batchSize', dest='batch_size', type=int, default=256)
     parser.add_argument('--optim', default='bert')
     # set to gqa defaults
+    parser.add_argument('--batchSize', dest='batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=1e-5)
     parser.add_argument('--epochs', type=int, default=4)
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--seed', type=int, default=9595, help='random seed')
 
     # Debugging
-    parser.add_argument('--output_dir', type=str, default='classifier_outputs')
-    parser.add_argument('--output_file', type=str, default='predictions.json')
+    parser.add_argument('--output_dir', type=str, default='classifier_run')
     
     parser.add_argument("--fast", action='store_const', default=False, const=True)
     parser.add_argument("--tiny", action='store_const', default=False, const=True)
-    parser.add_argument("--tqdm", action='store_const', default=False, const=True)
+    parser.add_argument("--tqdm", action='store_const', default=True, const=True)
 
     # Model Loading
     parser.add_argument('--load_finetune', type=str, default=None,
@@ -92,7 +91,9 @@ def parse_args():
     args.from_scratch = False
     if args.load_lxmert and '_LXRT.pth' in args.load_lxmert:
         args.load_lxmert = args.load_lxmert.replace('_LXRT.pth', '')
-
+    if args.load_finetune and '.pth' in args.load_finetune:
+        args.load_finetune = args.load_finetune.replace('.pth', '')
+    
     # Bind optimizer class.
     args.optimizer = get_optimizer(args.optim)
 

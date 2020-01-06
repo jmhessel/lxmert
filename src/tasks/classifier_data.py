@@ -106,7 +106,7 @@ class ClassifierTorchDataset(Dataset):
         img_data = []
 
         for path in args.image_feat_tsv.split(','):
-            img_data.extend(classifier_buffer_loader.load_data(path, -1))
+            img_data.extend(classifier_buffer_loader.load_data(path, topk))
         
         self.imgid2img = {}
         for img_datum in img_data:
@@ -181,9 +181,9 @@ class ClassifierEvaluator:
         """
         with open(path, 'w') as f:
             result = []
-            for ques_id, ans in quesid2ans.items():
+            for instance_id, ans in instance_id2ans.items():
                 result.append({
-                    'questionId': ques_id,
+                    'instanceId': instance_id,
                     'prediction': ans
                 })
             json.dump(result, f, indent=4, sort_keys=True)
