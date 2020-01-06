@@ -593,6 +593,27 @@ class BertPooler(nn.Module):
         return pooled_output
 
 
+class BertMeanPooler(nn.Module):
+    def __init__(self, config):
+        super(BertMeanPooler, self).__init__()
+        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.activation = nn.Tanh()
+
+    def forward(self, hidden_states, mask):
+        # We "pool" the model by taking a mean over non-masked states
+        #print(hidden_states.size(), mask.size())
+        if mask is not None:
+            masked_states = hidden_states * mask.unsqueeze(-1)
+            pooled_feature = masked_states.sum(1)
+            n_valid = mask.sum(1) + 1E-12
+            pooled_feature = pooled_feature / n_valid.unsqueeze(-1)
+        else:
+            pooled_feature = hidden_states.mean(1)
+        pooled_output = self.dense(pooled_feature)
+        pooled_output = self.activation(pooled_output)
+        return pooled_output
+
+
 class BertPredictionHeadTransform(nn.Module):
     def __init__(self, config):
         super(BertPredictionHeadTransform, self).__init__()
@@ -852,8 +873,8 @@ class LXRTModel(BertPreTrainedModel):
         self.embeddings = BertEmbeddings(config)
         self.encoder = LXRTEncoder(config, model_type)
         self.pooler = BertPooler(config)
-        self.language_only_pooler = BertPooler(config)
-        self.vision_only_pooler = BertPooler(config)
+        self.language_only_pooler = BertMeanPooler(config)
+        self.vision_only_pooler = BertMeanPooler(config)
         self.model_type = model_type
         if self.model_type not in ['full', 'concat', 'text_only', 'image_only']:
             raise NotImplementedError(
@@ -861,17 +882,15 @@ class LXRTModel(BertPreTrainedModel):
 
         hid_dim = config.hidden_size
         self.language_fc = nn.Sequential(
-            nn.Linear(hid_dim, hid_dim),
+            nn.Linear(hid_dim, int(hid_dim/2)),
             GeLU(),
-            BertLayerNorm(hid_dim, eps=1e-12),
-            nn.Linear(hid_dim, int(hid_dim/2))
+            BertLayerNorm(int(hid_dim/2), eps=1e-12),
         )
         
         self.vision_fc = nn.Sequential(
-            nn.Linear(hid_dim, hid_dim),
-            GeLU(),
-            BertLayerNorm(hid_dim, eps=1e-12),
             nn.Linear(hid_dim, int(hid_dim/2)),
+            GeLU(),
+            BertLayerNorm(int(hid_dim/2), eps=1e-12)
         )
         
         self.apply(self.init_bert_weights)
@@ -919,12 +938,14 @@ class LXRTModel(BertPreTrainedModel):
         if self.model_type == 'full':
             pooled_output = self.pooler(lang_feats)
         elif self.model_type == 'concat':                                  
-            language_pooled = self.language_fc(self.language_only_pooler(lang_feats))
-            vision_pooled = self.vision_fc(self.vision_only_pooler(visn_feats))
+            language_pooled = self.language_fc(
+                self.language_only_pooler(lang_feats, attention_mask))
+            vision_pooled = self.vision_fc(
+                self.vision_only_pooler(visn_feats, None))
             pooled_output = torch.cat((language_pooled, vision_pooled), 1)
         elif self.model_type == 'text_only':
             pooled_output = self.language_only_pooler(lang_feats)
-        elif self.model_type == 'vision_only':
+        elif self.model_type == 'image_only':
             pooled_output = self.vision_only_pooler(visn_feats)
 
         return (lang_feats, visn_feats), pooled_output
