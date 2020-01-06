@@ -20,7 +20,7 @@ class ClassifierModel(nn.Module):
         )
         hid_dim = self.lxrt_encoder.dim
 
-        if num_ansers == 2:
+        if num_answers == 2:
             output_dim = 1
         else:
             output_dim = num_answers

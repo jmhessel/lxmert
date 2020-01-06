@@ -1,7 +1,10 @@
 # coding=utf-8
 # Copyleft 2019 project LXRT.
 
+import sys
 import os
+sys.path.append(os.getcwd() + '/src/')
+
 import collections
 
 import torch
@@ -10,8 +13,8 @@ import torch.nn as nn
 from torch.utils.data.dataloader import DataLoader
 
 from finetune_param import args
-from tasks.classifier_model import ClassifierModel
-from tasks.classifier_data import ClassifierDataset, ClassifierTorchDataset, ClassifierEvaluator
+from classifier_model import ClassifierModel
+from classifier_data import ClassifierDataset, ClassifierTorchDataset, ClassifierEvaluator
 
 
 DataTuple = collections.namedtuple("DataTuple", 'dataset loader evaluator')
@@ -33,12 +36,12 @@ def get_tuple(splits: str, bs:int, shuffle=False, drop_last=False) -> DataTuple:
 class Classifier:
     def __init__(self):
         self.train_tuple = get_tuple(
-            args.train, bs=args.batch_size, shuffle=True, drop_last=True
+            args.train_json, bs=args.batch_size, shuffle=True, drop_last=True
         )
-        if args.valid != "":
+        if args.valid_json != "-1":
             valid_bsize = 2048 if args.multiGPU else 512
             self.valid_tuple = get_tuple(
-                args.valid, bs=valid_bsize,
+                args.valid_json, bs=valid_bsize,
                 shuffle=False, drop_last=False
             )
         else:
@@ -171,21 +174,24 @@ class Classifier:
 
 
 if __name__ == "__main__":
-    # Build Class
-    classifier = Classifier()
 
-    # Load Model
-    if args.load is not None:
-        classifier.load(args.load)
-
-    if not args.load and not args.load_lxmert:
+    if not args.load_finetune and not args.load_lxmert:
         raise NotImplementedError(
             'Error: you appear to be loading *no pretrained weights*. '
             'You want to be loading either the lxmert weights for finetuning '
             'or the finetuned weights for testing.')
         quit()
 
-    if args.train is not None:
+    
+    # Build Classifier
+    classifier = Classifier()
+
+    # Load Model
+    if args.load is not None:
+        classifier.load(args.load)
+
+
+    if args.train != '-1':
         print('Splits in Train data:', classifier.train_tuple.dataset.splits)
         if classifier.valid_tuple is not None:
             print('Splits in Valid data:', classifier.valid_tuple.dataset.splits)
@@ -194,7 +200,7 @@ if __name__ == "__main__":
             print('Warning: we are not using a validation set! this is discouraged.')
         classifier.train(classifier.train_tuple, classifier.valid_tuple)
         
-    if args.test is not None:
+    if args.test != '-1':
         print('Testing!')
         args.fast = args.tiny = False       # Always loading all data in test
         classifier.predict(

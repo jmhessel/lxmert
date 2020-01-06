@@ -7,25 +7,47 @@ import random
 import numpy as np
 import torch
 
-import param
+
+def get_optimizer(optim):
+    # Bind the optimizer
+    if optim == 'rms':
+        print("Optimizer: Using RMSProp")
+        optimizer = torch.optim.RMSprop
+    elif optim == 'adam':
+        print("Optimizer: Using Adam")
+        optimizer = torch.optim.Adam
+    elif optim == 'adamax':
+        print("Optimizer: Using Adamax")
+        optimizer = torch.optim.Adamax
+    elif optim == 'sgd':
+        print("Optimizer: sgd")
+        optimizer = torch.optim.SGD
+    elif 'bert' in optim:
+        optimizer = 'bert'      # The bert optimizer will be bind later.
+    else:
+        assert False, "Please add your optimizer %s in the list." % optim
+
+    return optimizer
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
 
     # Data Params. These are all required.
-    parser.add_argument("--train_json", default=None,
-                        'comma seperated training jsons '
-                        'e.g., "train1.json,train2.json" or "train.json".')
-    parser.add_argument("--valid_json", default=None,
-                        'comma seperated validation jsons.')
-    parser.add_argument("--test_json", default=None,
-                        'comma seperated testing jsons.')
-    parser.add_argument("--ans2label", default=None,
-                        'json dictionary mapping from strings to ints. '
+    parser.add_argument("train_json",
+                        help='comma seperated training jsons '
+                        'e.g., "train1.json,train2.json" or "train.json". '
+                        'For None, use -1.')
+    parser.add_argument("valid_json",
+                        help='comma seperated validation jsons. For none, use -1.')
+    parser.add_argument("test_json",
+                        help='comma seperated testing jsons. For none, use -1.')
+    parser.add_argument("ans2label", default=None,
+                        help='json dictionary mapping from strings to ints. '
                         'the strings are the names of the classes, and the '
                         'ints are their indices.')
-    parser.add_argument("--image_feat_tsvs", default=None,
-                        'comma seperated tsv for files containing extracted '
+    parser.add_argument("image_feat_tsv", default=None,
+                        help='comma seperated tsv for files containing extracted '
                         'image features. '
                         'e.g., "data/feats1.tsv,data/feats2.tsv" or "vg_gqa_obj36.tsv"')
 
@@ -65,9 +87,14 @@ def parse_args():
 
     # Parse the arguments.
     args = parser.parse_args()
+    
+    # we need to set these, but we dont want to make them mutable
+    args.from_scratch = False
+    if args.load_lxmert and '_LXRT.pth' in args.load_lxmert:
+        args.load_lxmert = args.load_lxmert.replace('_LXRT.pth', '')
 
     # Bind optimizer class.
-    args.optimizer = param.get_optimizer(args.optim)
+    args.optimizer = get_optimizer(args.optim)
 
     # Set seeds
     torch.manual_seed(args.seed)
@@ -75,6 +102,5 @@ def parse_args():
     np.random.seed(args.seed)
 
     return args
-
 
 args = parse_args()

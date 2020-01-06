@@ -150,7 +150,3 @@ class LXRTEncoder(nn.Module):
 
         # Load weights to model
         self.model.load_state_dict(state_dict, strict=False)
-
-
-
-

@@ -33,13 +33,14 @@ class ClassifierDataset:
     the class names, or just string placeholders for ints) to class probabilities.
     """
     def __init__(self, splits: str):
+
         self.name = splits
         self.splits = splits.split(',')
 
         # Loading datasets to data
         self.data = []
         for split in self.splits:
-            self.data.extend(json.load(split))
+            self.data.extend(json.load(open(split)))
         print("Load %d data from split(s) %s." % (len(self.data), self.name))
 
         # List to dict (for evaluation and others)
@@ -50,7 +51,7 @@ class ClassifierDataset:
 
         # Answers
         self.ans2label = json.load(open(args.ans2label))
-        self.label2ans = {v: k for k, v in self.ans2label}
+        self.label2ans = {v: k for k, v in self.ans2label.items()}
 
     @property
     def num_answers(self):

@@ -101,5 +101,4 @@ def parse_args():
 
     return args
 
-
 args = parse_args()
