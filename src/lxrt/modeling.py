@@ -942,6 +942,10 @@ class LXRTModel(BertPreTrainedModel):
                 visual_attention_mask = torch.ones(visn_feats.size()[:-1], dtype=torch.int64).cuda()            
             all_mask = torch.cat([visual_attention_mask, attention_mask], 1)            
             pooled_output = self.pooler(all_feats, all_mask)
+
+            # for first-token pooling
+            # pooled_output = self.pooler(lang_feats)
+            
         elif self.model_type == 'concat':                                  
             language_pooled = self.language_fc(
                 self.language_only_pooler(lang_feats, attention_mask))
