@@ -135,10 +135,10 @@ class SentenceRank:
                 score1 = self.model(feats, boxes, sent1)
 
                 score = score0 - score1
-                predict = (score0 > score1) * 2 - 1
+                predict = ((score0 > score1) * 2 - 1).squeeze()
                 
                 for instance_id, l in zip(instance_ids, predict.cpu().numpy()):
-                    instance_id2pred[instance_id] = l
+                    instance_id2pred[instance_id] = int(l)
                 
         if dump is not None:
             evaluator.dump_result(instance_id2pred, dump)
