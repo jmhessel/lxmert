@@ -48,7 +48,6 @@ class ClassifierModel(nn.Module):
         :param feat: (b, o, f)
         :param pos:  (b, o, 4)
         :param sent: (b,) Type -- list of string
-        :param leng: (b,) Type -- int numpy array
         :return: (b, num_answer) The logit of each answers.
         """
         x = self.lxrt_encoder(sent, (feat, pos))

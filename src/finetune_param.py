@@ -42,15 +42,20 @@ def parse_args():
                         help='comma seperated validation jsons. For none, use -1.')
     parser.add_argument("test_json",
                         help='comma seperated testing jsons. For none, use -1.')
-    parser.add_argument("ans2label", default=None,
-                        help='json dictionary mapping from strings to ints. '
-                        'the strings are the names of the classes, and the '
-                        'ints are their indices.')
     parser.add_argument("image_feat_tsv", default=None,
                         help='comma seperated tsv for files containing extracted '
                         'image features. '
                         'e.g., "data/feats1.tsv,data/feats2.tsv" or "vg_gqa_obj36.tsv"')
 
+    parser.add_argument('output_dir', type=str, default='output')
+    
+    # classifier arguments
+    parser.add_argument("--ans2label", default=None,
+                        help='json dictionary mapping from strings to ints. '
+                        'the strings are the names of the classes, and the '
+                        'ints are their indices.')
+
+    
     # Training Hyper-parameters
     parser.add_argument('--optim', default='bert')
     # set to gqa defaults
@@ -61,8 +66,6 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=9595, help='random seed')
 
     # Debugging
-    parser.add_argument('--output_dir', type=str, default='classifier_run')
-    
     parser.add_argument("--fast", action='store_const', default=False, const=True)
     parser.add_argument("--tiny", action='store_const', default=False, const=True)
     parser.add_argument("--tqdm", action='store_const', default=True, const=True)

@@ -222,6 +222,4 @@ if __name__ == "__main__":
                       shuffle=False, drop_last=False),
             dump=os.path.join(args.output_dir, 'test_predictions.json')
         )
-        
-
 

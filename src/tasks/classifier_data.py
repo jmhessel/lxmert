@@ -96,10 +96,6 @@ class ClassifierTorchDataset(Dataset):
         else:
             topk = -1
 
-        # Loading detection features to img_data
-        # Since images in train and valid both come from Visual Genome,
-        # buffer the image loading to save memory.
-
         # This could be more memory efficient. For example, the buffer could
         # load only image data that has a corresponding datapoint, rather
         # than the other way around.
