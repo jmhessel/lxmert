@@ -1,0 +1,6 @@
+python src/tasks/sentence_rank.py data/captionme_data/pics_pairs_1.train_json data/captionme_data/pics_pairs_1.val_json data/captionme_data/pics_pairs_1.test_json data/captionme_data/pics_images_features.tsv --loadLXMERT snap/pretrained/model_LXRT.pth rank_output --model_type full --lr .00001 --epochs 5 --multiGPU
+
+python src/tasks/sentence_rank.py data/captionme_data/captionme_captions_1.train_json data/captionme_data/captionme_captions_1.val_json data/captionme_data/captionme_captions_1.test_json data/captionme_data/captionme_image_features.tsv --loadLXMERT snap/pretrained/model_LXRT.pth rank_output --model_type full --lr .00001 --epochs 5 --multiGPU
+
+
+for idx in {0..9}; do CUDA_VISIBLE_DEVICES=0 python src/tasks/classifier.py /share/drive/jack/decouple-content/data/tweets/twitter_split$idx\.json.lxmert_train_json /share/drive/jack/decouple-content/data/tweets/twitter_split$idx\.json.lxmert_val_json /share/drive/jack/decouple-content/data/tweets/twitter_split$idx\.json.lxmert_test_json data/twitter_data/valid_obj36.tsv twitter_concat_$idx --ans2label data/twitter_data/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type concat --lr .00001 --epochs 5; done;
