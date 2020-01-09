@@ -24,9 +24,9 @@ def convert_example(ex):
     del ex['pair_identifier']
     return ex
 
-class SentenceRankDataset:
+class RankDataset:
     """
-    A sentence rank data example in the json file:
+    A rank data example in the json file:
     {
       'pair_identifier': unique string identifying this pair,
       'image': image identifier,
@@ -58,7 +58,7 @@ class SentenceRankDataset:
         return len(self.data)
 
 
-class SentenceRankBufferLoader():
+class RankBufferLoader():
     def __init__(self):
         self.key2data = {}
 
@@ -71,7 +71,7 @@ class SentenceRankBufferLoader():
             )
         return self.key2data[key]
 
-sentence_rank_buffer_loader = SentenceRankBufferLoader()
+rank_buffer_loader = RankBufferLoader()
     
 """
 An example in obj36 tsv:
@@ -79,8 +79,8 @@ FIELDNAMES = ["img_id", "img_h", "img_w", "objects_id", "objects_conf",
               "attrs_id", "attrs_conf", "num_boxes", "boxes", "features"]
 FIELDNAMES would be keys in the dict returned by load_obj_tsv.
 """
-class SentenceRankTorchDataset(Dataset):
-    def __init__(self, dataset: SentenceRankDataset):
+class RankTorchDataset(Dataset):
+    def __init__(self, dataset: RankDataset):
         super().__init__()
         self.raw_dataset = dataset
 
@@ -97,7 +97,7 @@ class SentenceRankTorchDataset(Dataset):
         img_data = []
 
         for path in args.image_feat_tsv.split(','):
-            img_data.extend(sentence_rank_buffer_loader.load_data(path, topk))
+            img_data.extend(rank_buffer_loader.load_data(path, topk))
         
         self.imgid2img = {}
         for img_datum in img_data:
@@ -144,8 +144,8 @@ class SentenceRankTorchDataset(Dataset):
             return instance_id, feats, boxes, sent0, sent1
 
 
-class SentenceRankEvaluator:
-    def __init__(self, dataset: SentenceRankDataset):
+class RankEvaluator:
+    def __init__(self, dataset: RankDataset):
         self.dataset = dataset
 
     def evaluate(self, instance_id2ans: dict):

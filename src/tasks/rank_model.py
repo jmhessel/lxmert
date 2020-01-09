@@ -10,7 +10,7 @@ from finetune_param import args
 MAX_RANK_LENGTH = 40
 
 
-class SentenceRankModel(nn.Module):
+class RankModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.lxrt_encoder = LXRTEncoder(

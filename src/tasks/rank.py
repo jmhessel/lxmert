@@ -12,16 +12,16 @@ import torch.nn as nn
 from torch.utils.data.dataloader import DataLoader
 
 from finetune_param import args
-from tasks.sentence_rank_model import SentenceRankModel
-from tasks.sentence_rank_data import SentenceRankDataset, SentenceRankTorchDataset, SentenceRankEvaluator
+from tasks.rank_model import RankModel
+from tasks.rank_data import RankDataset, RankTorchDataset, RankEvaluator
 
 DataTuple = collections.namedtuple("DataTuple", 'dataset loader evaluator')
 
 
 def get_tuple(splits: str, bs:int, shuffle=False, drop_last=False) -> DataTuple:
-    dset = SentenceRankDataset(splits)
-    tset = SentenceRankTorchDataset(dset)
-    evaluator = SentenceRankEvaluator(dset)
+    dset = RankDataset(splits)
+    tset = RankTorchDataset(dset)
+    evaluator = RankEvaluator(dset)
     data_loader = DataLoader(
         tset, batch_size=bs,
         shuffle=shuffle, num_workers=args.num_workers,
@@ -31,7 +31,7 @@ def get_tuple(splits: str, bs:int, shuffle=False, drop_last=False) -> DataTuple:
     return DataTuple(dataset=dset, loader=data_loader, evaluator=evaluator)
 
 
-class SentenceRank:
+class Rank:
     def __init__(self):
         if args.train_json != "-1":
             self.train_tuple = get_tuple(
@@ -49,7 +49,7 @@ class SentenceRank:
         else:
             self.valid_tuple = None
 
-        self.model = SentenceRankModel()
+        self.model = RankModel()
 
         # Load pre-trained weights
         if args.load_lxmert is not None:
@@ -179,30 +179,30 @@ if __name__ == "__main__":
         quit()
     
     # Build ranker
-    sentence_rank = SentenceRank()
+    rank = Rank()
 
     # Load Model
     if args.load_finetune is not None:
-        sentence_rank.load(args.load_finetune)
+        rank.load(args.load_finetune)
 
     trained_this_run = False
     if args.train_json != '-1':
         trained_this_run = True
-        print('Splits in Train data:', sentence_rank.train_tuple.dataset.splits)
-        if sentence_rank.valid_tuple is not None:
-            print('Splits in Valid data:', sentence_rank.valid_tuple.dataset.splits)
-            print("Valid Oracle: %0.2f" % (sentence_rank.oracle_score(sentence_rank.valid_tuple) * 100))
+        print('Splits in Train data:', rank.train_tuple.dataset.splits)
+        if rank.valid_tuple is not None:
+            print('Splits in Valid data:', rank.valid_tuple.dataset.splits)
+            print("Valid Oracle: %0.2f" % (rank.oracle_score(rank.valid_tuple) * 100))
         else:
             print('Warning: we are not using a validation set! this is discouraged.')
-        sentence_rank.train(sentence_rank.train_tuple, sentence_rank.valid_tuple)
+        rank.train(rank.train_tuple, rank.valid_tuple)
         
     if args.test_json != '-1':
         if trained_this_run:
             print('loading from best!')
-            sentence_rank.load(os.path.join(sentence_rank.output, 'BEST'))
+            rank.load(os.path.join(rank.output, 'BEST'))
         print('Testing!')
         args.fast = args.tiny = False       # Always loading all data in test
-        sentence_rank.predict(
+        rank.predict(
             get_tuple(args.test_json, bs=args.batch_size,
                       shuffle=False, drop_last=False),
             dump=os.path.join(args.output_dir, 'test_predictions.json')
