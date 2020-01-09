@@ -136,8 +136,6 @@ class Rank:
                 f0, b0 = f0.cuda(), b0.cuda()
                 f1, b1 = f1.cuda(), b1.cuda()
 
-                label = label.cuda()
-
                 score0 = self.model(f0, b0, sent0)
                 score1 = self.model(f1, b1, sent1)
 
