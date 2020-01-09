@@ -83,6 +83,8 @@ class Classifier:
                 self.optim = args.optimizer(list(self.model.parameters()), args.lr)
 
         self.output = args.output_dir
+        self.best_name = None
+        
         os.makedirs(self.output, exist_ok=True)
 
     def train(self, train_tuple, eval_tuple):
@@ -124,7 +126,8 @@ class Classifier:
                 valid_score = self.evaluate(eval_tuple)
                 if valid_score > best_valid:
                     best_valid = valid_score
-                    self.save("BEST")
+                    self.best_name = 'epoch_{}_valscore_{:.5f}'.format(epoch, valid_score * 100.)
+                    self.save(self.best_name)
 
                 log_str += "Epoch %d: Valid %0.2f\n" % (epoch, valid_score * 100.) + \
                            "Epoch %d: Best %0.2f\n" % (epoch, best_valid * 100.)
@@ -213,8 +216,8 @@ if __name__ == "__main__":
         
     if args.test_json != '-1':
         if trained_this_run:
-            print('loading from best!')
-            classifier.load(os.path.join(classifier.output, 'BEST'))
+            print('loading from {}!'.format(classifier.best_name))
+            classifier.load(os.path.join(classifier.output, classifier.best_name))
         print('Testing!')
         args.fast = args.tiny = False       # Always loading all data in test
         classifier.predict(
