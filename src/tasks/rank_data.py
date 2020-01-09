@@ -21,7 +21,8 @@ def convert_example(ex):
     ex['img_id_1'] = ex['image1']
     ex['instance_id'] = ex['pair_identifier']
     ex['label'] = ex['label'] * 2 - 1
-    del ex['image']
+    del ex['image0']
+    del ex['image1']
     del ex['pair_identifier']
     return ex
 

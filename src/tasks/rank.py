@@ -88,7 +88,10 @@ class Rank:
             for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, label) in iter_wrapper(enumerate(loader)):
                 self.model.train()
                 self.optim.zero_grad()
-                feats, boxes, label = feats.cuda(), boxes.cuda(), label.cuda()
+                f0, b0 = f0.cuda(), b0.cuda()
+                f1, b1 = f1.cuda(), b1.cuda()
+
+                label = label.cuda()
                 score0 = self.model(f0, b0, sent0)
                 score1 = self.model(f1, b1, sent1)
                 
@@ -130,7 +133,11 @@ class Rank:
         for i, datum_tuple in enumerate(loader):
             instance_ids, f0, b0, f1, b1, sent0, sent1 = datum_tuple[:-1]
             with torch.no_grad():
-                feats, boxes = feats.cuda(), boxes.cuda()
+                f0, b0 = f0.cuda(), b0.cuda()
+                f1, b1 = f1.cuda(), b1.cuda()
+
+                label = label.cuda()
+
                 score0 = self.model(f0, b0, sent0)
                 score1 = self.model(f1, b1, sent1)
 
