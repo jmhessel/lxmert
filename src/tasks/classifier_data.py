@@ -5,10 +5,12 @@ import json
 
 import numpy as np
 import torch
+import sklearn.preprocessing
 from torch.utils.data import Dataset
 
 from finetune_param import args
 from utils import load_obj_tsv
+import eval_utils
 
 # Load part of the dataset for fast checking.
 # Notice that here is the number of images instead of the number of data,
@@ -157,31 +159,85 @@ class ClassifierEvaluator:
     def __init__(self, dataset: ClassifierDataset):
         self.dataset = dataset
 
-    def evaluate(self, instance_id2ans: dict):
-        score = 0.
-        for instance_id, ans in instance_id2ans.items():
-            datum = self.dataset.id2datum[instance_id]
-            label = datum['label']
-            if ans in label:
-                score += label[ans]
-        return score / len(instance_id2ans)
+    def convert_dict_to_hard_label(self, label_dict):
+        top_ans_pred = self.convert_dict_to_hard_answer(label_dict)
+        return self.dataset.ans2label[top_ans_pred]
+
+    def convert_dict_to_hard_answer(self, label_dict):
+        sorted_items = sorted(list(label_dict.items()), key=lambda x: -x[1])
+        top_ans_pred = sorted_items[0][0]
+        return top_ans_pred
+
+    def evaluate(self, instance_id2ans: dict, return_full = False):
+        true_labels, predicted_labels, predicted_scores = [], [], []
+        for cid, pred in instance_id2ans.items():
+            datum = self.dataset.id2datum[cid]
+            true_labels.append(self.convert_dict_to_hard_label(datum['label']))
+            predicted_labels.append(pred['label'])
+            if 'scores' in predicted_labels:
+                predicted_scores.append(pred['scores'])
+
+        true_labels = np.array(true_labels)
+        predicted_labels = np.array(predicted_labels)
+                
+        n_labels = self.dataset.num_answers
+                
+        if len(predicted_scores) == 0:
+            if n_labels == 2:
+                predicted_scores = predicted_labels
+            else:
+                predicted_scores = sklearn.preprocessing.label_binarize(
+                    predicted_labels, classes=np.arange(n_labels))
+        else:
+            predicted_scores = np.array(predicted_scores)
+
+        if n_labels == 2:
+            res = eval_utils.get_metrics_binary(
+                predicted_scores, predicted_labels, true_labels)
+        else:
+            res = eval_utils.get_metrics_multiclass(
+                predicted_scores, predicted_labels, true_labels)
+
+        print(res)
+        
+        if return_full:
+            return res
+        else:
+            return res[args.optimize_metric]
 
     def dump_result(self, instance_id2ans: dict, path):
         """
         Dump the result to a prediction json of the following form:
-            results = [result]
+            results = {'per_instance': [result], 'metrics': metrics}
             result = {
-                "questionId": str,
-                "prediction": str
+                "instance_id": str,
+                "predicted_answer": str,
+                "predicted_label": str,
+                "answer": ground truth answer,
+                "label": ground truth label,
+                "predicted_scores": list of floats representing the logits for each class,
             }
+            metric is a dictionary of evaluation metrics.
         """
         with open(path, 'w') as f:
+
+            metrics = self.evaluate(instance_id2ans, return_full=True)
             result = []
-            for instance_id, ans in instance_id2ans.items():
+
+            for k, v in metrics.items():
+                metrics[k] = float(v)
+                
+            for cid, ans in instance_id2ans.items():
+                datum = self.dataset.id2datum[cid]
                 result.append({
-                    'instanceId': instance_id,
-                    'prediction': ans
+                    'instance_id': cid,
+                    'predicted_answer': str(ans['answer']),
+                    'predicted_label': int(self.dataset.ans2label[ans['answer']]),
+                    'predicted_scores': list([float(x) for x in ans['scores']]),
+                    'label': int(self.convert_dict_to_hard_label(datum['label'])),
+                    'answer': str(self.convert_dict_to_hard_answer(datum['label'])),
                 })
-            json.dump(result, f, indent=4, sort_keys=True)
+                
+            json.dump({'result': result, 'metrics': metrics}, f, indent=4, sort_keys=True)
 
 

@@ -113,9 +113,9 @@ class Classifier:
                 self.optim.step()
 
                 score, label = logit.max(1)
-                for instance_id, l in zip(instance_ids, label.cpu().numpy()):
+                for instance_id, l, scores in zip(instance_ids, label.cpu().numpy(), logit.detach().cpu().numpy()):
                     ans = dset.label2ans[l]
-                    instance_id2pred[instance_id] = ans
+                    instance_id2pred[instance_id] = {'answer': ans, 'label': l, 'scores': scores}
 
             log_str = "\nEpoch %d: Train %0.2f\n" % (epoch,
                                                      evaluator.evaluate(instance_id2pred) * 100.)
@@ -147,9 +147,9 @@ class Classifier:
                 feats, boxes = feats.cuda(), boxes.cuda()
                 logit = self.model(feats, boxes, sent)
                 score, label = logit.max(1)
-                for instance_id, l in zip(instance_ids, label.cpu().numpy()):
+                for instance_id, l, scores in zip(instance_ids, label.cpu().numpy(), logit.detach().cpu().numpy()):
                     ans = dset.label2ans[l]
-                    instance_id2pred[instance_id] = ans
+                    instance_id2pred[instance_id] = {'answer': ans, 'label': l, 'scores': scores}
         if dump is not None:
             evaluator.dump_result(instance_id2pred, dump)
         return instance_id2pred
@@ -167,7 +167,7 @@ class Classifier:
             _, label = target.max(1)
             for instance_id, l in zip(instance_ids, label.cpu().numpy()):
                 ans = dset.label2ans[l]
-                instance_id2pred[instance_id] = ans
+                instance_id2pred[instance_id] = {'answer': ans, 'label': l}
         return evaluator.evaluate(instance_id2pred)
 
     def save(self, name):

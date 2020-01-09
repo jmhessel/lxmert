@@ -58,6 +58,9 @@ def parse_args():
     
     # Training Hyper-parameters
     parser.add_argument('--optim', default='bert')
+    parser.add_argument('--optimize_metric', default='acc',
+                        help='which metric to optimize over the validation set?')
+    
     # set to gqa defaults
     parser.add_argument('--batchSize', dest='batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=1e-5)
