@@ -208,7 +208,7 @@ class ClassifierEvaluator:
     def dump_result(self, instance_id2ans: dict, path):
         """
         Dump the result to a prediction json of the following form:
-            results = {'per_instance': [result], 'metrics': metrics}
+            results = {'per_instance': [result], 'metrics': metrics, 'args':args}
             result = {
                 "instance_id": str,
                 "predicted_answer": str,
@@ -218,6 +218,7 @@ class ClassifierEvaluator:
                 "predicted_scores": list of floats representing the logits for each class,
             }
             metric is a dictionary of evaluation metrics.
+            
         """
         with open(path, 'w') as f:
 
@@ -238,6 +239,6 @@ class ClassifierEvaluator:
                     'answer': str(self.convert_dict_to_hard_answer(datum['label'])),
                 })
                 
-            json.dump({'result': result, 'metrics': metrics}, f, indent=4, sort_keys=True)
+            json.dump({'result': result, 'metrics': metrics, 'args':vars(args)}, f, indent=4, sort_keys=True)
 
 

@@ -218,11 +218,14 @@ if __name__ == "__main__":
         if trained_this_run:
             print('loading from {}!'.format(classifier.best_name))
             classifier.load(os.path.join(classifier.output, classifier.best_name))
+            args.load_finetune = classifier.best_name
+
+        prediction_name_prefix = args.load_finetune.split('/')[-1]
+
         print('Testing!')
         args.fast = args.tiny = False       # Always loading all data in test
         classifier.predict(
             get_tuple(args.test_json, bs=args.batch_size,
                       shuffle=False, drop_last=False),
-            dump=os.path.join(args.output_dir, 'test_predictions.json')
+            dump=os.path.join(args.output_dir, prediction_name_prefix + '_test_predictions.json')
         )
-
