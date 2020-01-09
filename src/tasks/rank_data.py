@@ -17,7 +17,8 @@ FAST_IMG_NUM = 5000
 
 
 def convert_example(ex):
-    ex['img_id'] = ex['image']
+    ex['img_id_0'] = ex['image0']
+    ex['img_id_1'] = ex['image1']
     ex['instance_id'] = ex['pair_identifier']
     ex['label'] = ex['label'] * 2 - 1
     del ex['image']
@@ -29,10 +30,11 @@ class RankDataset:
     A rank data example in the json file:
     {
       'pair_identifier': unique string identifying this pair,
-      'image': image identifier,
+      'image0': image identifier 0,
+      'image1': image identifier 0,
       'sent0': text of sentence 0,
       'sent1': text of sentence 1,
-      'label': 1 if sent0 better else 0
+      'label': 1 if (image0, sent0) better than (image1, sent1) image else 0
     }
     """
     def __init__(self, splits: str):
@@ -47,7 +49,6 @@ class RankDataset:
 
         self.data = [convert_example(d) for d in self.data]
 
-        
         # List to dict (for evaluation and others)
         self.id2datum = {
             datum['instance_id']: datum
@@ -106,8 +107,9 @@ class RankTorchDataset(Dataset):
         # Only kept the data with loaded image features
         self.data = []
         for datum in self.raw_dataset.data:
-            if datum['img_id'] in self.imgid2img:
-                self.data.append(datum)
+            if datum['img_id_0'] in self.imgid2img:
+                if datum['img_id_1'] in self.imgid2img:
+                    self.data.append(datum)
         print("Use %d data in torch dataset" % (len(self.data)))
         print()
 
@@ -119,29 +121,36 @@ class RankTorchDataset(Dataset):
 
         instance_id = datum['instance_id']
         sent0, sent1 = datum['sent0'], datum['sent1']
-        img_id = datum['img_id']
-        
+        img_id_0, img_id_1 = datum['img_id_0'], datum['img_id_1']
+
+        all_feats, all_boxes = [], []
         # Get image info
-        img_info = self.imgid2img[img_id]
-        obj_num = img_info['num_boxes']
-        boxes = img_info['boxes'].copy()
-        feats = img_info['features'].copy()
-        assert len(boxes) == len(feats) == obj_num
+        for img_id in [img_id_0, img_id_1]:
+            img_info = self.imgid2img[img_id]
+            obj_num = img_info['num_boxes']
+            boxes = img_info['boxes'].copy()
+            feats = img_info['features'].copy()
+            assert len(boxes) == len(feats) == obj_num
 
-        # Normalize the boxes (to 0 ~ 1)
-        img_h, img_w = img_info['img_h'], img_info['img_w']
-        boxes = boxes.copy()
-        boxes[:, (0, 2)] /= img_w
-        boxes[:, (1, 3)] /= img_h
-        np.testing.assert_array_less(boxes, 1+1e-5)
-        np.testing.assert_array_less(-boxes, 0+1e-5)
+            # Normalize the boxes (to 0 ~ 1)
+            img_h, img_w = img_info['img_h'], img_info['img_w']
+            boxes = boxes.copy()
+            boxes[:, (0, 2)] /= img_w
+            boxes[:, (1, 3)] /= img_h
+            np.testing.assert_array_less(boxes, 1+1e-5)
+            np.testing.assert_array_less(-boxes, 0+1e-5)
+            all_feats.append(feats)
+            all_boxes.append(boxes)
 
+        f0, f1 = all_feats
+        b0, b1 = all_boxes
+            
         # Create target
         if 'label' in datum:
             label = datum['label']
-            return instance_id, feats, boxes, sent0, sent1, label
+            return instance_id, f0, b0, f1, b1, sent0, sent1, label
         else:
-            return instance_id, feats, boxes, sent0, sent1
+            return instance_id, f0, b0, f1, b1, sent0, sent1
 
 
 class RankEvaluator:

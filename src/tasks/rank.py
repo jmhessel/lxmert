@@ -85,12 +85,12 @@ class Rank:
         best_valid = 0.
         for epoch in range(args.epochs):
             instance_id2pred = {}
-            for i, (instance_ids, feats, boxes, sent0, sent1, label) in iter_wrapper(enumerate(loader)):
+            for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, label) in iter_wrapper(enumerate(loader)):
                 self.model.train()
                 self.optim.zero_grad()
                 feats, boxes, label = feats.cuda(), boxes.cuda(), label.cuda()
-                score0 = self.model(feats, boxes, sent0)
-                score1 = self.model(feats, boxes, sent1)
+                score0 = self.model(f0, b0, sent0)
+                score1 = self.model(f1, b1, sent1)
                 
                 loss = self.rank_loss(score0, score1, label)
 
@@ -128,11 +128,11 @@ class Rank:
         dset, loader, evaluator = eval_tuple
         instance_id2pred = {}
         for i, datum_tuple in enumerate(loader):
-            instance_ids, feats, boxes, sent0, sent1 = datum_tuple[:5]   # avoid handling target
+            instance_ids, f0, b0, f1, b1, sent0, sent1 = datum_tuple[:-1]
             with torch.no_grad():
                 feats, boxes = feats.cuda(), boxes.cuda()
-                score0 = self.model(feats, boxes, sent0)
-                score1 = self.model(feats, boxes, sent1)
+                score0 = self.model(f0, b0, sent0)
+                score1 = self.model(f1, b1, sent1)
 
                 score = score0 - score1
                 predict = ((score0 > score1) * 2 - 1).squeeze()
@@ -154,7 +154,7 @@ class Rank:
     def oracle_score(data_tuple):
         dset, loader, evaluator = data_tuple
         instance_id2pred = {}
-        for i, (instance_ids, feats, boxes, sent0, sent1, label) in enumerate(loader):
+        for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, label) in enumerate(loader):
             for instance_id, l in zip(instance_ids, label.cpu().numpy()):
                 instance_id2pred[instance_id] = l
         return evaluator.evaluate(instance_id2pred)
