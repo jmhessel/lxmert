@@ -54,6 +54,9 @@ def parse_args():
                         help='json dictionary mapping from strings to ints. '
                         'the strings are the names of the classes, and the '
                         'ints are their indices.')
+    parser.add_argument("--use_logits", default=0,
+                        type=int,
+                        help='Should we use the logits in the data file?')
 
     
     # Training Hyper-parameters

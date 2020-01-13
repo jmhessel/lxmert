@@ -94,13 +94,13 @@ class Classifier:
         best_valid = 0.
         for epoch in range(args.epochs):
             instance_id2pred = {}
-            for i, (instance_ids, feats, boxes, sent, target) in iter_wrapper(enumerate(loader)):
+            for i, (instance_ids, feats, boxes, sent, logit_in, target) in iter_wrapper(enumerate(loader)):
 
                 self.model.train()
                 self.optim.zero_grad()
 
-                feats, boxes, target = feats.cuda(), boxes.cuda(), target.cuda()
-                logit = self.model(feats, boxes, sent)
+                feats, boxes, logit_in, target = feats.cuda(), boxes.cuda(), logit_in.cuda(), target.cuda()
+                logit = self.model(feats, boxes, sent) + logit_in
                 assert logit.dim() == target.dim() == 2
 
                 if logit.size(1) > 1: # multiclass, mce loss
@@ -145,10 +145,10 @@ class Classifier:
         dset, loader, evaluator = eval_tuple
         instance_id2pred = {}
         for i, datum_tuple in enumerate(loader):
-            instance_ids, feats, boxes, sent = datum_tuple[:4]   # avoid handling target
+            instance_ids, feats, boxes, sent, logit_in = datum_tuple[:5]   # avoid handling target
             with torch.no_grad():
-                feats, boxes = feats.cuda(), boxes.cuda()
-                logit = self.model(feats, boxes, sent)
+                feats, boxes, logit_in = feats.cuda(), boxes.cuda(), logit_in.cuda()
+                logit = self.model(feats, boxes, sent) + logit_in
                 score, label = logit.max(1)
                 for instance_id, l, scores in zip(instance_ids, label.cpu().numpy(), logit.detach().cpu().numpy()):
                     ans = dset.label2ans[l]
@@ -166,7 +166,7 @@ class Classifier:
     def oracle_score(data_tuple):
         dset, loader, evaluator = data_tuple
         instance_id2pred = {}
-        for i, (instance_ids, feats, boxes, sent, target) in enumerate(loader):
+        for i, (instance_ids, feats, boxes, sent, logit_in, target) in enumerate(loader):
             _, label = target.max(1)
             for instance_id, l in zip(instance_ids, label.cpu().numpy()):
                 ans = dset.label2ans[l]

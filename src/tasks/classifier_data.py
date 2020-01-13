@@ -28,7 +28,8 @@ class ClassifierDataset:
             "0": 1.0
         },
         "instance_id": "07333408",
-        "sent": "What is on the white wall?"
+        "sent": "What is on the white wall?",
+        (optionally) "logit": [list of logits]
     }
 
     "label" is a dictionary mapping 'answers' (which may be strings representing
@@ -143,6 +144,12 @@ class ClassifierTorchDataset(Dataset):
         np.testing.assert_array_less(boxes, 1+1e-5)
         np.testing.assert_array_less(-boxes, 0+1e-5)
 
+        # create logits
+        if 'logit' in datum and args.use_logits:
+            logit_in = torch.FloatTensor(datum['logit'])
+        else:
+            logit_in = torch.zeros(self.raw_dataset.num_answers)
+
         # Create target
         if 'label' in datum:
             label = datum['label']
@@ -150,9 +157,9 @@ class ClassifierTorchDataset(Dataset):
             for ans, score in label.items():
                 if ans in self.raw_dataset.ans2label:
                     target[self.raw_dataset.ans2label[ans]] = score
-            return instance_id, feats, boxes, sent, target
+            return instance_id, feats, boxes, sent, logit_in, target
         else:
-            return instance_id, feats, boxes, sent
+            return instance_id, feats, boxes, sent, logit_in
 
 
 class ClassifierEvaluator:
