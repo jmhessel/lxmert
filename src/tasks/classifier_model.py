@@ -35,8 +35,11 @@ class ClassifierModel(nn.Module):
                 nn.Linear(hid_dim * 2, output_dim)
             )
         else:
+            linear = nn.Linear(hid_dim, output_dim)
+            if args.use_logits:
+                nn.init.xavier_normal_(linear.weight, gain=0.01)
             self.logit_fc = nn.Sequential(
-                nn.Linear(hid_dim, output_dim),
+                linear,
             )
             
         self.logit_fc.apply(self.lxrt_encoder.model.init_bert_weights)
