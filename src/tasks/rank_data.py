@@ -140,6 +140,14 @@ class RankTorchDataset(Dataset):
             boxes[:, (1, 3)] /= img_h
             np.testing.assert_array_less(boxes, 1+1e-5)
             np.testing.assert_array_less(-boxes, 0+1e-5)
+            
+            #resample if less than 36 boxes
+            if len(feats) != 36:
+                to_resample = 36 - len(feats)
+                all_idxs = list(range(len(feats))) + list(np.random.choice(len(feats), size=to_resample))
+                feats = feats[all_idxs]
+                boxes = boxes[all_idxs]
+
             all_feats.append(feats)
             all_boxes.append(boxes)
 
