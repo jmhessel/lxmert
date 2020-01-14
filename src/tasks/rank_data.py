@@ -147,6 +147,7 @@ class RankTorchDataset(Dataset):
                 all_idxs = list(range(len(feats))) + list(np.random.choice(len(feats), size=to_resample))
                 feats = feats[all_idxs]
                 boxes = boxes[all_idxs]
+                print('resampled bboxes. this should be rare.')
 
             all_feats.append(feats)
             all_boxes.append(boxes)
