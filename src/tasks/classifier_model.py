@@ -27,7 +27,7 @@ class ClassifierModel(nn.Module):
         else:
             output_dim = num_answers
 
-        if self.model_type == 'concat':
+        if self.model_type != 'concat':
             self.logit_fc = nn.Sequential(
                 nn.Linear(hid_dim, hid_dim * 2),
                 GeLU(),
@@ -36,8 +36,6 @@ class ClassifierModel(nn.Module):
             )
         else:
             linear = nn.Linear(hid_dim, output_dim)
-            if args.use_logits:
-                nn.init.xavier_normal_(linear.weight, gain=0.01)
             self.logit_fc = nn.Sequential(
                 linear,
             )
