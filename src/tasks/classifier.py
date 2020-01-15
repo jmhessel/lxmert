@@ -101,6 +101,7 @@ class Classifier:
 
                 feats, boxes, logit_in, target = feats.cuda(), boxes.cuda(), logit_in.cuda(), target.cuda()
                 logit = self.model(feats, boxes, sent) + logit_in
+                
                 assert logit.dim() == target.dim() == 2
 
                 if logit.size(1) > 1: # multiclass, mce loss
