@@ -29,14 +29,17 @@ class ClassifierModel(nn.Module):
 
         if self.model_type != 'concat':
             self.logit_fc = nn.Sequential(
+                nn.Dropout(args.dropout),
                 nn.Linear(hid_dim, hid_dim * 2),
                 GeLU(),
                 BertLayerNorm(hid_dim * 2, eps=1e-12),
+                nn.Dropout(args.dropout),
                 nn.Linear(hid_dim * 2, output_dim)
             )
         else:
             linear = nn.Linear(hid_dim, output_dim)
             self.logit_fc = nn.Sequential(
+                nn.Dropout(args.dropout),
                 linear,
             )
             
