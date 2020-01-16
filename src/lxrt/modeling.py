@@ -872,7 +872,10 @@ class LXRTModel(BertPreTrainedModel):
         super().__init__(config)
         self.embeddings = BertEmbeddings(config)
         self.encoder = LXRTEncoder(config, model_type)
-        self.pooler = BertMeanPooler(config)
+        if model_type == 'full':
+            self.pooler = BertPooler(config)
+        else:
+            self.pooler = BertMeanPooler(config)
         self.language_only_pooler = BertMeanPooler(config)
         self.vision_only_pooler = BertMeanPooler(config)
         self.model_type = model_type
@@ -937,14 +940,14 @@ class LXRTModel(BertPreTrainedModel):
 
         if self.model_type == 'full':
             # for mean pooling
-            all_feats = torch.cat([visn_feats, lang_feats], 1)
-            if visual_attention_mask is None:
-                visual_attention_mask = torch.ones(visn_feats.size()[:-1], dtype=torch.int64).cuda()            
-            all_mask = torch.cat([visual_attention_mask, attention_mask], 1)            
-            pooled_output = self.pooler(all_feats, all_mask)
+            # all_feats = torch.cat([visn_feats, lang_feats], 1)
+            # if visual_attention_mask is None:
+            #     visual_attention_mask = torch.ones(visn_feats.size()[:-1], dtype=torch.int64).cuda()            
+            # all_mask = torch.cat([visual_attention_mask, attention_mask], 1)            
+            # pooled_output = self.pooler(all_feats, all_mask)
 
-            # for first-token pooling
-            # pooled_output = self.pooler(lang_feats)
+            for first-token pooling
+            pooled_output = self.pooler(lang_feats)
             
         elif self.model_type == 'concat':                                  
             language_pooled = self.language_fc(
