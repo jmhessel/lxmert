@@ -872,10 +872,7 @@ class LXRTModel(BertPreTrainedModel):
         super().__init__(config)
         self.embeddings = BertEmbeddings(config)
         self.encoder = LXRTEncoder(config, model_type)
-        if model_type == 'full':
-            self.pooler = BertPooler(config)
-        else:
-            self.pooler = BertMeanPooler(config)
+        self.pooler = BertPooler(config)
         self.language_only_pooler = BertMeanPooler(config)
         self.vision_only_pooler = BertMeanPooler(config)
         self.model_type = model_type
@@ -885,15 +882,19 @@ class LXRTModel(BertPreTrainedModel):
 
         hid_dim = config.hidden_size
         self.language_fc = nn.Sequential(
+            nn.Dropout(config.hidden_dropout_prob),
             nn.Linear(hid_dim, int(hid_dim/2)),
             GeLU(),
             BertLayerNorm(int(hid_dim/2), eps=1e-12),
+            nn.Dropout(config.hidden_dropout_prob),
         )
         
         self.vision_fc = nn.Sequential(
+            nn.Dropout(config.hidden_dropout_prob),
             nn.Linear(hid_dim, int(hid_dim/2)),
             GeLU(),
-            BertLayerNorm(int(hid_dim/2), eps=1e-12)
+            BertLayerNorm(int(hid_dim/2), eps=1e-12),
+            nn.Dropout(config.hidden_dropout_prob),
         )
         
         self.apply(self.init_bert_weights)
@@ -939,22 +940,10 @@ class LXRTModel(BertPreTrainedModel):
             visn_attention_mask=extended_visual_attention_mask)
 
         if self.model_type == 'full':
-            # for mean pooling
-            # all_feats = torch.cat([visn_feats, lang_feats], 1)
-            # if visual_attention_mask is None:
-            #     visual_attention_mask = torch.ones(visn_feats.size()[:-1], dtype=torch.int64).cuda()            
-            # all_mask = torch.cat([visual_attention_mask, attention_mask], 1)            
-            # pooled_output = self.pooler(all_feats, all_mask)
-
-            # for first-token pooling
             pooled_output = self.pooler(lang_feats)
-            
         elif self.model_type == 'concat':                                  
-            language_pooled = self.language_only_pooler(lang_feats) # self.language_fc(
-                #self.language_only_pooler(lang_feats))#, attention_mask))
-            vision_pooled = self.vision_only_pooler(visn_feats)
-            #self.vision_fc(
-            #    self.vision_only_pooler(visn_feats))#, None))
+            language_pooled = self.language_fc(self.language_only_pooler(lang_feats, attention_mask))
+            vision_pooled = self.vision_fc(self.vision_only_pooler(visn_feats, None))
             pooled_output = torch.cat([language_pooled, vision_pooled], 1)
         elif self.model_type == 'text_only':
             pooled_output = self.language_only_pooler(lang_feats)
