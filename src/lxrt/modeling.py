@@ -950,10 +950,11 @@ class LXRTModel(BertPreTrainedModel):
             pooled_output = self.pooler(lang_feats)
             
         elif self.model_type == 'concat':                                  
-            language_pooled = self.language_fc(
-                self.language_only_pooler(lang_feats, attention_mask))
-            vision_pooled = self.vision_fc(
-                self.vision_only_pooler(visn_feats, None))
+            language_pooled = self.language_only_pooler(lang_feats) # self.language_fc(
+                #self.language_only_pooler(lang_feats))#, attention_mask))
+            vision_pooled = self.vision_only_pooler(visn_feats)
+            #self.vision_fc(
+            #    self.vision_only_pooler(visn_feats))#, None))
             pooled_output = torch.cat([language_pooled, vision_pooled], 1)
         elif self.model_type == 'text_only':
             pooled_output = self.language_only_pooler(lang_feats)
