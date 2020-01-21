@@ -118,7 +118,12 @@ class Classifier:
                 nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
                 self.optim.step()
 
-                score, label = logit.max(1)
+                if logit.size()[1] > 1:
+                    score, label = logit.max(1)
+                else:
+                    score = logit.flatten()
+                    label = (logit > 0).float().flatten()
+                
                 for instance_id, l, scores in zip(instance_ids, label.cpu().numpy(), logit.detach().cpu().numpy()):
                     ans = dset.label2ans[l]
                     instance_id2pred[instance_id] = {'answer': ans, 'label': l, 'scores': scores}
