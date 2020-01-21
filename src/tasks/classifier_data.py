@@ -148,7 +148,10 @@ class ClassifierTorchDataset(Dataset):
         if 'logit' in datum and args.use_logits:
             logit_in = torch.FloatTensor(datum['logit'])
         else:
-            logit_in = torch.zeros(self.raw_dataset.num_answers)
+            if self.raw_dataset.num_answers > 2: # multiclass
+                logit_in = torch.zeros(self.raw_dataset.num_answers)
+            else: # binary
+                logit_in = torch.zeros(1)
 
         # Create target
         if 'label' in datum:
