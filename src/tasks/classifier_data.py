@@ -153,10 +153,16 @@ class ClassifierTorchDataset(Dataset):
         # Create target
         if 'label' in datum:
             label = datum['label']
-            target = torch.zeros(self.raw_dataset.num_answers)
-            for ans, score in label.items():
-                if ans in self.raw_dataset.ans2label:
-                    target[self.raw_dataset.ans2label[ans]] = score
+            if self.raw_dataset.num_answers > 2: # multiclass mode
+                target = torch.zeros(self.raw_dataset.num_answers)
+                for ans, score in label.items():
+                    if ans in self.raw_dataset.ans2label:
+                        target[self.raw_dataset.ans2label[ans]] = score
+            else: # binary mode
+                target = torch.zeros(1)
+                assert len(label) == 1, 'binary can only have one label'
+                target = float(self.raw_dataset.ans2label[list(label.keys())[0]])
+                
             return instance_id, feats, boxes, sent, logit_in, target
         else:
             return instance_id, feats, boxes, sent, logit_in

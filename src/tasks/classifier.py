@@ -101,7 +101,10 @@ class Classifier:
 
                 feats, boxes, logit_in, target = feats.cuda(), boxes.cuda(), logit_in.cuda(), target.cuda()
                 logit = self.model(feats, boxes, sent) + logit_in
-                
+
+                if target.dim() == 1: #expand targets in binary mode
+                    assert logit.size(1) == 1
+                    target = target.unsqueeze(1)
                 assert logit.dim() == target.dim() == 2
 
                 if logit.size(1) > 1: # multiclass, mce loss
@@ -150,7 +153,11 @@ class Classifier:
             with torch.no_grad():
                 feats, boxes, logit_in = feats.cuda(), boxes.cuda(), logit_in.cuda()
                 logit = self.model(feats, boxes, sent) + logit_in
-                score, label = logit.max(1)
+                if logit.size()[1] > 1:
+                    score, label = logit.max(1)
+                else:
+                    score = logit.flatten()
+                    label = (logit > 0).float().flatten()
                 for instance_id, l, scores in zip(instance_ids, label.cpu().numpy(), logit.detach().cpu().numpy()):
                     ans = dset.label2ans[l]
                     instance_id2pred[instance_id] = {'answer': ans, 'label': l, 'scores': scores}
@@ -168,7 +175,10 @@ class Classifier:
         dset, loader, evaluator = data_tuple
         instance_id2pred = {}
         for i, (instance_ids, feats, boxes, sent, logit_in, target) in enumerate(loader):
-            _, label = target.max(1)
+            if len(target.size()) > 1 and target.size()[1] > 1:
+                _, label = target.max(1)
+            else:
+                label = torch.flatten(target)
             for instance_id, l in zip(instance_ids, label.cpu().numpy()):
                 ans = dset.label2ans[l]
                 instance_id2pred[instance_id] = {'answer': ans, 'label': l}
