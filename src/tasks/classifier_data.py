@@ -181,7 +181,7 @@ class ClassifierEvaluator:
             datum = self.dataset.id2datum[cid]
             true_labels.append(self.convert_dict_to_hard_label(datum['label']))
             predicted_labels.append(pred['label'])
-            if 'scores' in predicted_labels:
+            if 'scores' in pred:
                 predicted_scores.append(pred['scores'])
 
         true_labels = np.array(true_labels)
