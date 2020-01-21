@@ -100,7 +100,7 @@ class Classifier:
                 self.optim.zero_grad()
 
                 feats, boxes, logit_in, target = feats.cuda(), boxes.cuda(), logit_in.cuda(), target.cuda()
-                logit = 0*self.model(feats, boxes, sent) + logit_in
+                logit = self.model(feats, boxes, sent) + logit_in
                 
                 assert logit.dim() == target.dim() == 2
 
@@ -149,7 +149,7 @@ class Classifier:
             instance_ids, feats, boxes, sent, logit_in = datum_tuple[:5]   # avoid handling target
             with torch.no_grad():
                 feats, boxes, logit_in = feats.cuda(), boxes.cuda(), logit_in.cuda()
-                logit = 0*self.model(feats, boxes, sent) + logit_in
+                logit = self.model(feats, boxes, sent) + logit_in
                 score, label = logit.max(1)
                 for instance_id, l, scores in zip(instance_ids, label.cpu().numpy(), logit.detach().cpu().numpy()):
                     ans = dset.label2ans[l]

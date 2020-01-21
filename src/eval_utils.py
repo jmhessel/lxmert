@@ -45,7 +45,6 @@ def get_metrics_multiclass(pred, pred_clf, te_y):
         res['macro_average_' + m] = np.mean(stats)
     res['macro_acc'] = np.mean(per_class_acc)
     res['acc'] = accuracy
-    print(pred[:4])
     res['macro_auc'] = sklearn.metrics.roc_auc_score(
         sklearn.preprocessing.label_binarize(te_y, list(range(len(classes)))),
         pred,
