@@ -61,7 +61,7 @@ def main():
             question_id += 1
 
     print('generated {} new questions'.format(question_id))
-    with open(args.input_json + '-repeat_{}'.format(args.n_questions), 'w') as f:
+    with open('repeat_{}_'.format(args.n_questions) + args.input_json, 'w') as f:
         f.write(json.dumps(new_data))
 
         

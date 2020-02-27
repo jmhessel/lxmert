@@ -191,6 +191,13 @@ if __name__ == "__main__":
                                shuffle=False, drop_last=False),
                 dump=os.path.join(args.output, 'test_predict.json')
             )
+        elif 'repeat' in args.test:
+            result = vqa.evaluate(
+                get_data_tuple(args.test, bs=950,
+                               shuffle=False, drop_last=False),
+                dump=os.path.join(args.output, '{}_predict.json'.format(args.test))
+            )
+            print(result)
         elif 'val' in args.test:    
             # Since part of valididation data are used in pre-training/fine-tuning,
             # only validate on the minival set.
