@@ -57,11 +57,13 @@ def main():
     def get_pred(logits):
         return label2ans[np.argmax(logits)]
 
-    orig_tot, add_tot, mean_tot = 0, 0, 0
+    orig_tot, add_tot, lang_tot, image_tot, mean_tot = 0, 0, 0, 0, 0
     for idx in range(n_points):
         data = idx2data[idx]
         pred_orig = get_pred(v_idx2t_idx2logits[idx][idx])
         pred_additive = get_pred(v_idx2mean[idx] + t_idx2mean[idx] - mean)
+        pred_lang = get_pred(t_idx2mean[idx])
+        pred_image = get_pred(v_idx2mean[idx])
         pred_mean = get_pred(mean)
 
         if pred_orig in data['label']:
@@ -70,12 +72,20 @@ def main():
         if pred_additive in data['label']:
             add_tot += data['label'][pred_additive]
 
+        if pred_lang in data['label']:
+            lang_tot += data['label'][pred_lang]
+
+        if pred_image in data['label']:
+            image_tot += data['label'][pred_image]
+            
         if pred_mean in data['label']:
             mean_tot += data['label'][pred_mean]
 
-    print('orig/add/mean: {:.2f}/{:.2f}/{:.2f}'.format(
+    print('orig/add/image/text/mean: {:.2f}/{:.2f}/{:.2f}/{:.2f}/{:.2f}'.format(
         orig_tot / n_points * 100,
         add_tot / n_points * 100,
+        image_tot / n_points * 100,
+        lang_tot / n_points * 100,
         mean_tot / n_points * 100))
         
         
