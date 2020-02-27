@@ -134,15 +134,15 @@ class VQA:
         self.model.eval()
         dset, loader, evaluator = eval_tuple
         quesid2ans = {}
-        for i, datum_tuple in enumerate(loader):
+        for i, datum_tuple in tqdm(enumerate(loader), total=len(loader)):
             ques_id, feats, boxes, sent = datum_tuple[:4]   # Avoid seeing ground truth
             with torch.no_grad():
                 feats, boxes = feats.cuda(), boxes.cuda()
                 logit = self.model(feats, boxes, sent)
                 score, label = logit.max(1)
-                for qid, l in zip(ques_id, label.cpu().numpy()):
+                for qid, l, log in zip(ques_id, label.cpu().numpy(), logit.cpu().numpy()):
                     ans = dset.label2ans[l]
-                    quesid2ans[qid.item()] = ans
+                    quesid2ans[qid.item()] = {'ans': ans, 'logits': log.tolist()}
         if dump is not None:
             evaluator.dump_result(quesid2ans, dump)
         return quesid2ans
