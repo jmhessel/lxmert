@@ -170,7 +170,7 @@ class VQA:
     def load(self, path):
         print("Load model from %s" % path)
         state_dict = torch.load("%s.pth" % path)
-        self.model.load_state_dict(state_dict)
+        self.model.load_state_dict(state_dict, strict=False)
 
 
 if __name__ == "__main__":
