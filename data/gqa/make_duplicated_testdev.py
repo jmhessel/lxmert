@@ -54,7 +54,7 @@ def main():
             cur_dict['text_idx'] = t_idx
             cur_dict['sent'] = t_idx2text[t_idx]
             cur_dict['img_id'] = v_idx2img[v_idx]
-            cur_dict['question_id'] = question_id
+            cur_dict['question_id'] = str(question_id)
             new_data.append(cur_dict)
             question_id += 1
 
