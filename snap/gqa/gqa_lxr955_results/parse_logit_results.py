@@ -80,8 +80,10 @@ def main():
             
         if pred_mean in data['label']:
             mean_tot += data['label'][pred_mean]
+            
 
-    print('orig/add/image/text/mean: {:.2f}/{:.2f}/{:.2f}/{:.2f}/{:.2f}'.format(
+    print('orig/add/image/text/mean, n points={}: {:.2f}/{:.2f}/{:.2f}/{:.2f}/{:.2f}'.format(
+        n_points,
         orig_tot / n_points * 100,
         add_tot / n_points * 100,
         image_tot / n_points * 100,
