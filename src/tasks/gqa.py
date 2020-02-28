@@ -131,15 +131,15 @@ class GQA:
         self.model.eval()
         dset, loader, evaluator = eval_tuple
         quesid2ans = {}
-        for i, datum_tuple in enumerate(loader):
+        for i, datum_tuple in tqdm(enumerate(loader), total=len(loader)):
             ques_id, feats, boxes, sent = datum_tuple[:4]   # avoid handling target
             with torch.no_grad():
                 feats, boxes = feats.cuda(), boxes.cuda()
                 logit = self.model(feats, boxes, sent)
                 score, label = logit.max(1)
-                for qid, l in zip(ques_id, label.cpu().numpy()):
+                for qid, l, log in zip(ques_id, label.cpu().numpy(), logit.cpu().numpy()):
                     ans = dset.label2ans[l]
-                    quesid2ans[qid] = ans
+                    quesid2ans[qid] = {'ans': ans, 'logits': log.tolist()}
         if dump is not None:
             evaluator.dump_result(quesid2ans, dump)
         return quesid2ans
@@ -190,7 +190,14 @@ if __name__ == "__main__":
                           shuffle=False, drop_last=False),
                 dump=os.path.join(args.output, 'submit_predict.json')
             )
-        if 'testdev' in args.test:
+        elif 'repeat' in args.test:
+            result = gqa.evaluate(
+                get_tuple(args.test, bs=args.batch_size,
+                          shuffle=False, drop_last=False),
+                dump=os.path.join(args.output, '{}_predict.json'.format(args.test))
+            )
+            print(result)
+        elif 'testdev' in args.test:
             result = gqa.evaluate(
                 get_tuple('testdev', bs=args.batch_size,
                           shuffle=False, drop_last=False),

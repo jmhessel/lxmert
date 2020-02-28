@@ -164,8 +164,8 @@ class GQAEvaluator:
         for quesid, ans in quesid2ans.items():
             datum = self.dataset.id2datum[quesid]
             label = datum['label']
-            if ans in label:
-                score += label[ans]
+            if ans['ans'] in label:
+                score += label[ans['ans']]
         return score / len(quesid2ans)
 
     def dump_result(self, quesid2ans: dict, path):
@@ -185,9 +185,16 @@ class GQAEvaluator:
         with open(path, 'w') as f:
             result = []
             for ques_id, ans in quesid2ans.items():
+                if type(ques_id) is torch.Tensor:
+                    print('what')
+                    print(ques_id)
+                    continue
+                datum = self.dataset.id2datum[ques_id]
                 result.append({
-                    'questionId': ques_id,
-                    'prediction': ans
+                    'input': datum,
+                    'question_id': ques_id,
+                    'answer': ans['ans'],
+                    'logits': ans['logits']
                 })
             json.dump(result, f, indent=4, sort_keys=True)
 
