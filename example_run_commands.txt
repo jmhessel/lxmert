@@ -7,11 +7,10 @@ for idx in {0..9}; do CUDA_VISIBLE_DEVICES=0 python src/tasks/classifier.py /sha
 python src/tasks/classifier.py ../decouple-content/data/mdid_split_0_contextual.json.lxmert_train_json ../decouple-content/data/mdid_split_0_contextual.json.lxmert_val_json ../decouple-content/data/mdid_split_0_contextual.json.lxmert_test_json ../decouple-content/data/intent/train_obj36.tsv test_mdid --ans2label ../decouple-content/data/trainval_ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth
 
 
-
-
 CUDA_VISIBLE_DEVICES=0 python src/tasks/rank.py /share/drive/jack/decouple-content/data/popularity/pics_split_0.json.lxmert_train_json /share/drive/jack/decouple-content/data/popularity/pics_split_0.json.lxmert_val_json /share/drive/jack/decouple-content/data/popularity/pics_split_0.json.lxmert_test_json /share/drive/jack/decouple-content/data/popularity/pics_bbox_features.tsv --loadLXMERT snap/pretrained/model_LXRT.pth rank_output --model_type full
 
 
+~
 
 full twitter run:
 
@@ -29,7 +28,11 @@ full mdid contextual run:
 
 for model in {full,concat}; do for idx in {0..4}; do for lr in {.000001,.000005,.00001,.00005,.0001}; do CUDA_VISIBLE_DEVICES=1 python src/tasks/classifier.py /share/drive/jack/decouple-content/data/intent/mdid_split_$idx\_contextual.json.lxmert_train_json /share/drive/jack/decouple-content/data/intent/mdid_split_$idx\_contextual.json.lxmert_val_json /share/drive/jack/decouple-content/data/intent/mdid_split_$idx\_contextual.json.lxmert_test_json /share/drive/jack/decouple-content/data/intent/train_obj36.tsv mdid_contextual_$model\_$idx --ans2label /share/drive/jack/decouple-content/data/intent/contextual_ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 20 --optimize_metric macro_auc; done; rm mdid_contextual_$model\_$idx\/*.pth; done; done; for model in {full,concat}; do for idx in {0..4}; do for lr in {.000001,.000005,.00001,.00005,.0001}; do CUDA_VISIBLE_DEVICES=1 python src/tasks/classifier.py /share/drive/jack/decouple-content/data/intent/mdid_split_$idx\_contextual.json.lxmert_train_json /share/drive/jack/decouple-content/data/intent/mdid_split_$idx\_contextual.json.lxmert_val_json /share/drive/jack/decouple-content/data/intent/mdid_split_$idx\_contextual.json.lxmert_test_json /share/drive/jack/decouple-content/data/intent/train_obj36.tsv mdid_contextual_$model\logit_$idx --ans2label /share/drive/jack/decouple-content/data/intent/contextual_ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 20 --optimize_metric macro_auc --use_logits 1; done; rm mdid_contextual_$model\logit_$idx\/*.pth; done; done;
 
-
 full sentiment2 run:
 
 for model in {full,concat}; do for idx in {0..4}; do for lr in {.000001,.000005,.00001,.00005,.0001}; do CUDA_VISIBLE_DEVICES=0 python src/tasks/classifier.py /share/drive/jack/decouple-content/data/sentiment_2/sentiment_2_$idx\.json.lxmert_train_json /share/drive/jack/decouple-content/data/sentiment_2/sentiment_2_$idx\.json.lxmert_val_json /share/drive/jack/decouple-content/data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_json /share/drive/jack/decouple-content/data/sentiment_2/valid_obj36.tsv sentiment2_$model\_$idx --ans2label /share/drive/jack/decouple-content/data/sentiment_2/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 10 --optimize_metric acc; done; rm sentiment2_$model\_$idx\/*.pth; done; done; for model in {full,concat}; do for idx in {0..4}; do for lr in {.000001,.000005,.00001,.00005,.0001}; do CUDA_VISIBLE_DEVICES=0 python src/tasks/classifier.py /share/drive/jack/decouple-content/data/sentiment_2/sentiment_2_$idx\.json.lxmert_train_json /share/drive/jack/decouple-content/data/sentiment_2/sentiment_2_$idx\.json.lxmert_val_json /share/drive/jack/decouple-content/data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_json /share/drive/jack/decouple-content/data/sentiment_2/valid_obj36.tsv sentiment2_$model\logit_$idx --ans2label /share/drive/jack/decouple-content/data/sentiment_2/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 10 --optimize_metric acc --use_logits 1; done; rm sentiment2_$model\logit_$idx\/*.pth; done; done;
+
+full reddit run:
+
+
+for model in {full,concat}; do for idx in {0..15}; do for lr in {.000001,.000005,.00001,.00005,.0001}; do CUDA_VISIBLE_DEVICES=0 python src/tasks/rank.py data/reddit_data/pics_split_$idx\.json.lxmert_train_json data/reddit_data/pics_split_$idx\.json.lxmert_val_json data/reddit_data/pics_split_$idx\.json.lxmert_test_json data/reddit_data/pics_bbox_features.tsv reddit_$model\_$idx --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 5; done; rm reddit_$model\_$idx\/*.pth; done; done;
