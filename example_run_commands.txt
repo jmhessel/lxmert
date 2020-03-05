@@ -54,7 +54,7 @@ for model in {full,concat};
   do for lr in {.000001,.000005,.00001,.00005,.0001};
    do CUDA_VISIBLE_DEVICES=1 python src/tasks/classifier.py data/sentiment/sentiment_$idx\.json.lxmert_train_json data/sentiment/sentiment_$idx\.json.lxmert_val_json data/sentiment/sentiment_$idx\.json.lxmert_test_json data/sentiment/valid_obj36.tsv sentiment_$model\logits_$idx --ans2label data/sentiment/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 20 --optimize_metric roc_auc --use_logits 1;
    done;
-  python src/test_best_and_clean.py sentiment_$model\logits_$idx\/ data/sentiment/sentiment_$idx\.json.lxmert_test_allpairs_json data/sentiment/valid_obj36.tsv data/sentiment/ans2label.json;
+  python src/test_best_and_clean.py sentiment_$model\logits_$idx\/ data/sentiment/sentiment_$idx\.json.lxmert_test_allpairs_json data/sentiment/valid_obj36.tsv data/sentiment/ans2label.json --use_logits 1;
  done;
 done;
 *****

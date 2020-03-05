@@ -195,7 +195,7 @@ class ClassifierEvaluator:
 
         true_labels = np.array(true_labels)
         predicted_labels = np.array(predicted_labels)
-                
+        
         n_labels = self.dataset.num_answers
                 
         if len(predicted_scores) == 0:

@@ -153,7 +153,7 @@ class Classifier:
         self.model.eval()
         dset, loader, evaluator = eval_tuple
         instance_id2pred = {}
-        for i, datum_tuple in enumerate(loader):
+        for i, datum_tuple in tqdm(enumerate(loader), total=len(loader)):
             instance_ids, feats, boxes, sent, logit_in = datum_tuple[:5]   # avoid handling target
             with torch.no_grad():
                 feats, boxes, logit_in = feats.cuda(), boxes.cuda(), logit_in.cuda()
