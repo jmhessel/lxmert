@@ -34,6 +34,9 @@ def parse_args():
     parser.add_argument(
         '--script_name',
         default='classifier.py')
+    parser.add_argument(
+        '--use_logits',
+        default=0)
     
     return parser.parse_args()
 
@@ -52,8 +55,8 @@ def main():
     call('mv {} {}'.format(best_model, new_best_model))
     best_model = new_best_model
     
-    test_cmd = '/usr/local/bin/python3 src/tasks/{} -1 -1 {} {} {} --ans2label {} --load_finetune {}'.format(
-        args.script_name, args.test_file, args.image_features, args.checkpoint_dir, args.ans2label, best_model)
+    test_cmd = '/usr/local/bin/python3 src/tasks/{} -1 -1 {} {} {} --ans2label {} --load_finetune {} --use_logits {}'.format(
+        args.script_name, args.test_file, args.image_features, args.checkpoint_dir, args.ans2label, best_model, args.use_logits)
 
     call(test_cmd)
     
