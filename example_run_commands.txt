@@ -41,16 +41,15 @@ for model in {full,concat};
   do for lr in {.000001,.000005,.00001,.00005,.0001};
    do CUDA_VISIBLE_DEVICES=1 python src/tasks/classifier.py data/sentiment_2/sentiment_2_$idx\.json.lxmert_train_json data/sentiment_2/sentiment_2_$idx\.json.lxmert_val_json data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_json data/sentiment_2/valid_obj36.tsv sentiment_2_$model\_$idx --ans2label data/sentiment_2/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 10 --optimize_metric acc;
    done;
-  python src/test_best_and_clean.py sentiment_2_$model\_$idx\/ data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_allpairs_json data/sentiment_2/valid_obj36.tsv data/sentiment_2/ans2label.json;
+  python src/test_best_and_clean.py sentiment_2_$model\_$idx\/ data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_allpairs_json data/sentiment_2/valid_obj36.tsv data/sentiment_2/ans2label.json --model_type $model;
  done;
 done;
-
 for model in {full,concat};
  do for idx in {0..4};
   do for lr in {.000001,.000005,.00001,.00005,.0001};
    do CUDA_VISIBLE_DEVICES=1 python src/tasks/classifier.py data/sentiment_2/sentiment_2_$idx\.json.lxmert_train_json data/sentiment_2/sentiment_2_$idx\.json.lxmert_val_json data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_json data/sentiment_2/valid_obj36.tsv sentiment_2_$model\logits_$idx --ans2label data/sentiment_2/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 10 --optimize_metric acc --use_logits 1;
    done;
-  python src/test_best_and_clean.py sentiment_2_$model\logits_$idx\/ data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_allpairs_json data/sentiment_2/valid_obj36.tsv data/sentiment_2/ans2label.json --use_logits 1;
+  python src/test_best_and_clean.py sentiment_2_$model\logits_$idx\/ data/sentiment_2/sentiment_2_$idx\.json.lxmert_test_allpairs_json data/sentiment_2/valid_obj36.tsv data/sentiment_2/ans2label.json --use_logits 1 --model_type $model;
  done;
 done;
 *****
@@ -65,7 +64,7 @@ for model in {full,concat};
   do for lr in {.000001,.000005,.00001,.00005,.0001};
    do CUDA_VISIBLE_DEVICES=0 python src/tasks/classifier.py data/sentiment/sentiment_$idx\.json.lxmert_train_json data/sentiment/sentiment_$idx\.json.lxmert_val_json data/sentiment/sentiment_$idx\.json.lxmert_test_json data/sentiment/valid_obj36.tsv sentiment_$model\_$idx --ans2label data/sentiment/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 20 --optimize_metric roc_auc;
    done;
-  python src/test_best_and_clean.py sentiment_$model\_$idx\/ data/sentiment/sentiment_$idx\.json.lxmert_test_allpairs_json data/sentiment/valid_obj36.tsv data/sentiment/ans2label.json;
+  python src/test_best_and_clean.py sentiment_$model\_$idx\/ data/sentiment/sentiment_$idx\.json.lxmert_test_allpairs_json data/sentiment/valid_obj36.tsv data/sentiment/ans2label.json --model_type $model;
  done;
 done;
 
@@ -74,7 +73,7 @@ for model in {full,concat};
   do for lr in {.000001,.000005,.00001,.00005,.0001};
    do CUDA_VISIBLE_DEVICES=0 python src/tasks/classifier.py data/sentiment/sentiment_$idx\.json.lxmert_train_json data/sentiment/sentiment_$idx\.json.lxmert_val_json data/sentiment/sentiment_$idx\.json.lxmert_test_json data/sentiment/valid_obj36.tsv sentiment_$model\logits_$idx --ans2label data/sentiment/ans2label.json --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 20 --optimize_metric roc_auc --use_logits 1;
    done;
-  python src/test_best_and_clean.py sentiment_$model\logits_$idx\/ data/sentiment/sentiment_$idx\.json.lxmert_test_allpairs_json data/sentiment/valid_obj36.tsv data/sentiment/ans2label.json --use_logits 1;
+  python src/test_best_and_clean.py sentiment_$model\logits_$idx\/ data/sentiment/sentiment_$idx\.json.lxmert_test_allpairs_json data/sentiment/valid_obj36.tsv data/sentiment/ans2label.json --use_logits 1 --model_type $model;
  done;
 done;
 

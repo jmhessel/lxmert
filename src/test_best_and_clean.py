@@ -37,6 +37,9 @@ def parse_args():
     parser.add_argument(
         '--use_logits',
         default=0)
+    parser.add_argument(
+        '--model_type',
+        default='full')
     
     return parser.parse_args()
 
@@ -49,14 +52,15 @@ def name2score(name):
 def main():
     args = parse_args()
     f2score = {x:name2score(x) for x in os.listdir(args.checkpoint_dir) if '.pth' in x and 'LAST' not in x}
+    print(args.checkpoint_dir)
     best_model = args.checkpoint_dir + '/' + list(sorted(f2score.items(), key=lambda x: -x[1]))[0][0]
     new_best_model = args.checkpoint_dir + '/' + 'BEST_' + best_model.split('/')[-1]
     
     call('mv {} {}'.format(best_model, new_best_model))
     best_model = new_best_model
     
-    test_cmd = '/usr/local/bin/python3 src/tasks/{} -1 -1 {} {} {} --ans2label {} --load_finetune {} --use_logits {}'.format(
-        args.script_name, args.test_file, args.image_features, args.checkpoint_dir, args.ans2label, best_model, args.use_logits)
+    test_cmd = '/usr/local/bin/python3 src/tasks/{} -1 -1 {} {} {} --ans2label {} --load_finetune {} --use_logits {} --model_type {}'.format(
+        args.script_name, args.test_file, args.image_features, args.checkpoint_dir, args.ans2label, best_model, args.use_logits, args.model_type)
 
     call(test_cmd)
     
