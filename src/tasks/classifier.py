@@ -55,7 +55,7 @@ class Classifier:
 
         n_answers = len(json.load(open(args.ans2label)))
 
-        self.model = ClassifierModel(n_answers)
+        self.model = ClassifierModel(n_answers, model_type=args.model_type)
 
         # Load pre-trained weights
         if args.load_lxmert is not None:
@@ -99,8 +99,21 @@ class Classifier:
                 self.model.train()
                 self.optim.zero_grad()
 
+                # for gradient checking
+                # feats.requires_grad = True
+                
                 feats, boxes, logit_in, target = feats.cuda(), boxes.cuda(), logit_in.cuda(), target.cuda()
                 logit = self.model(feats, boxes, sent) + logit_in
+
+                # for gradient checks --- this errors for concat model (no dependence)
+                # but gives a gradient for the full model
+                # # text feature gradient
+                # dldf = torch.autograd.grad(
+                #     torch.sum(logit),
+                #     self.model.lxrt_encoder.model.bert.tmp_cur_embedding_output,
+                #     create_graph=True)[0]
+                # # image feature double gradient
+                # print(torch.autograd.grad(torch.sum(dldf), feats)[0])
 
                 if target.dim() == 1: #expand targets in binary mode
                     assert logit.size(1) == 1

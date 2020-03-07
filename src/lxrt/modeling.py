@@ -552,6 +552,10 @@ class LXRTEncoder(nn.Module):
 
         # ['full', 'concat', 'text_only', 'image_only']
 
+        # for grad checks...
+        #visn_feats_in = visn_feats
+        #lang_feats_in = lang_feats
+        
         # should we do visual processing?
         if self.model_type in ['full', 'concat', 'image_only']:
             visn_feats = self.visn_fc(visn_feats)
@@ -575,6 +579,11 @@ class LXRTEncoder(nn.Module):
                 lang_feats, visn_feats = layer_module(lang_feats, lang_attention_mask,
                                                       visn_feats, visn_attention_mask)
 
+        # check grad for concat vs. full modes
+        # sum_lang = torch.sum(lang_feats)
+        # dldv = torch.autograd.grad(sum_lang, visn_feats_in)[0]
+        # print(dldv)
+        
         return lang_feats, visn_feats
 
 
@@ -932,19 +941,35 @@ class LXRTModel(BertPreTrainedModel):
         # Positional Word Embeddings
         embedding_output = self.embeddings(input_ids, token_type_ids)
 
+        self.tmp_cur_embedding_output = embedding_output
+        
         # Run LXRT backbone
+
+        # for grad checks...
+        lang_feats_in, visn_feats_in = embedding_output, visual_feats
+        
         lang_feats, visn_feats = self.encoder(
             embedding_output,
             extended_attention_mask,
             visn_feats=visual_feats,
             visn_attention_mask=extended_visual_attention_mask)
 
+        # check grad for concat vs. full modes
+        # sum_lang = torch.sum(lang_feats)
+        # dldv = torch.autograd.grad(sum_lang, visn_feats_in)[0]
+        # print(dldv)
+        # quit()
+
         if self.model_type == 'full':
             pooled_output = self.pooler(lang_feats)
         elif self.model_type == 'concat':                                  
             language_pooled = self.language_fc(self.language_only_pooler(lang_feats, attention_mask))
             vision_pooled = self.vision_fc(self.vision_only_pooler(visn_feats, None))
+
+            #sum_lang = torch.sum(language_pooled)
+            #dldv = torch.autograd.grad(sum_lang, visn_feats_in)[0]
             pooled_output = torch.cat([language_pooled, vision_pooled], 1)
+            
         elif self.model_type == 'text_only':
             pooled_output = self.language_only_pooler(lang_feats)
         elif self.model_type == 'image_only':
@@ -1077,10 +1102,14 @@ class LXRTFeatureExtraction(BertPreTrainedModel):
         feat_seq, pooled_output = self.bert(input_ids, token_type_ids, attention_mask,
                                             visual_feats=visual_feats,
                                             visual_attention_mask=visual_attention_mask)
+        #check the grads for concat mode
+        #po_first, po_second = torch.sum(pooled_output[:, :768//2]), torch.sum(pooled_output[:, 768//2:])
+        #print(torch.sum(torch.autograd.grad(po_first, visual_feats, retain_graph=True)[0]**2))
+        #print(torch.sum(torch.autograd.grad(po_second, visual_feats)[0]**2))
+
         if 'x' == self.mode:
             return pooled_output
         elif 'x' in self.mode and ('l' in self.mode or 'r' in self.mode):
             return feat_seq, pooled_output
         elif 'l' in self.mode or 'r' in self.mode:
             return feat_seq
-
