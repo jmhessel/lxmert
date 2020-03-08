@@ -55,6 +55,7 @@ class Classifier:
 
         n_answers = len(json.load(open(args.ans2label)))
 
+        print(args.model_type)
         self.model = ClassifierModel(n_answers, model_type=args.model_type)
 
         # Load pre-trained weights
@@ -170,6 +171,7 @@ class Classifier:
             instance_ids, feats, boxes, sent, logit_in = datum_tuple[:5]   # avoid handling target
             with torch.no_grad():
                 feats, boxes, logit_in = feats.cuda(), boxes.cuda(), logit_in.cuda()
+                
                 logit = self.model(feats, boxes, sent) + logit_in
                 if logit.size()[1] > 1:
                     score, label = logit.max(1)
@@ -224,7 +226,6 @@ if __name__ == "__main__":
             'or the finetuned weights for testing.')
         quit()
 
-    
     # Build Classifier
     classifier = Classifier()
 
