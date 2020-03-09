@@ -10,7 +10,7 @@ import os
 import subprocess
 
 
-def call(x, just_print=False):
+def call(x, just_print=True):
     if just_print:
         print(x)
         return
@@ -45,14 +45,14 @@ def parse_args():
 
 
 def name2score(name):
-    #blah/epoch_0_valscore_65.22267.pth
-    return float(name.split('/')[-1].split('_')[-1][:-4])
+    #blah/epoch_0_valscore_65.22267_argshash_XXXX.pth
+    return float(name.split('/')[-1].split('_')[-3])
     
 
 def main():
     args = parse_args()
     f2score = {x:name2score(x) for x in os.listdir(args.checkpoint_dir) if '.pth' in x and 'LAST' not in x}
-    print(args.checkpoint_dir)
+
     best_model = args.checkpoint_dir + '/' + list(sorted(f2score.items(), key=lambda x: -x[1]))[0][0]
     new_best_model = args.checkpoint_dir + '/' + 'BEST_' + best_model.split('/')[-1]
     
