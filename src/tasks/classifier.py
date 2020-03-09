@@ -55,7 +55,6 @@ class Classifier:
 
         n_answers = len(json.load(open(args.ans2label)))
 
-        print(args.model_type)
         self.model = ClassifierModel(n_answers, model_type=args.model_type)
 
         # Load pre-trained weights
@@ -149,7 +148,7 @@ class Classifier:
                 valid_score = self.evaluate(eval_tuple)
                 if valid_score > best_valid:
                     best_valid = valid_score
-                    self.best_name = 'epoch_{}_valscore_{:.5f}'.format(epoch, valid_score * 100.)
+                    self.best_name = 'epoch_{}_valscore_{:.5f}_argshash_{}'.format(epoch, valid_score * 100., args.args_hash)
                     self.save(self.best_name)
 
                 log_str += "Epoch %d: Valid %0.2f\n" % (epoch, valid_score * 100.) + \
@@ -218,6 +217,10 @@ class Classifier:
 
 
 if __name__ == "__main__":
+
+    args_as_tuple = tuple(sorted({k: v for k, v in vars(args).items() if v is not None}.items()))
+    args_hash = hash(args_as_tuple)
+    args.args_hash = args_hash
 
     if not args.load_finetune and not args.load_lxmert:
         raise NotImplementedError(
