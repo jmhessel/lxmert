@@ -10,7 +10,7 @@ import os
 import subprocess
 
 
-def call(x, just_print=True):
+def call(x, just_print=False):
     if just_print:
         print(x)
         return
