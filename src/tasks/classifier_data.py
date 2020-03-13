@@ -144,6 +144,15 @@ class ClassifierTorchDataset(Dataset):
         np.testing.assert_array_less(boxes, 1+1e-5)
         np.testing.assert_array_less(-boxes, 0+1e-5)
 
+        #resample if less than 36 boxes
+        if len(feats) != 36:
+            to_resample = 36 - len(feats)
+            all_idxs = list(range(len(feats))) + list(np.random.choice(len(feats), size=to_resample))
+            feats = feats[all_idxs]
+            boxes = boxes[all_idxs]
+            print('resampled bboxes. this should be rare.')
+
+        
         # create logits
         if 'logit' in datum and args.use_logits:
             logit_in = torch.FloatTensor(datum['logit'])
