@@ -44,6 +44,7 @@ def main():
             v_idx2mean[v_idx].append(v_idx2t_idx2logits[v_idx][t_idx])
             t_idx2mean[t_idx].append(v_idx2t_idx2logits[v_idx][t_idx])
             mean.append(v_idx2t_idx2logits[v_idx][t_idx])
+
     v_idx2mean = {k: np.mean(np.vstack(v), axis=0) for k, v in v_idx2mean.items()}
     t_idx2mean = {k: np.mean(np.vstack(v), axis=0) for k, v in t_idx2mean.items()}
     mean = np.mean(np.vstack(mean), axis=0)
