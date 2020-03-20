@@ -1,4 +1,21 @@
 *****
+gqa crossval eval
+
+for idx in {0..14};
+  do bash run/gqa_test.bash 0 gqa_lxr955_results --load snap/gqa/gqa_lxr955/BEST --test repeat_500_seed_$idx\_testdev --batchSize 1024;
+done;
+*****
+
+*****
+vqa crossval eval
+for idx in {0..14};
+  do bash run/vqa_test.bash 1 vqa_lxr955_results --test repeat_500_seed_$idx\_minival --load snap/vqa/vqa_lxr955/BEST ;
+done;
+
+*****
+
+
+*****
 full twitter run:
 
 for model in {full,concat};

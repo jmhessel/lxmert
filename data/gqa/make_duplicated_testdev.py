@@ -1,5 +1,6 @@
 '''
 Generates json file
+for seed in {0..15}; do python make_duplicated_testdev.py --n_questions 500 --random_seed $seed; done;
 '''
 import argparse
 import json
@@ -13,7 +14,7 @@ def parse_args():
         type=str)
     parser.add_argument(
         '--n_questions',
-        default=100,
+        default=500,
         type=int)
     parser.add_argument(
         '--random_seed',
@@ -59,7 +60,7 @@ def main():
             question_id += 1
 
     print('generated {} new questions'.format(question_id))
-    with open('repeat_{}_'.format(args.n_questions) + args.input_json, 'w') as f:
+    with open('repeat_{}_seed_{}_'.format(args.n_questions, args.random_seed) + args.input_json, 'w') as f:
         f.write(json.dumps(new_data))
 
         
