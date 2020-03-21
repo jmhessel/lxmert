@@ -2,6 +2,8 @@
 Reports normal and additive accuracies:
 
 python parse_logit_results.py repeat_100_minival_predict.json ../../../data/vqa/trainval_ans2label.json
+
+for i in {0..14}; do python parse_logit_results.py repeat_500_seed_$i\_minival_predict.json ../../../data/vqa/trainval_ans2label.json; done;
 '''
 import argparse
 import json
