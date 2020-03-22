@@ -1,0 +1,45 @@
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 58.40/42.80/18.80/38.20/18.80
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 60.00/43.00/19.00/39.20/19.00
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 61.00/38.20/17.20/36.00/16.80
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 57.60/39.00/17.60/36.40/17.60
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 63.00/39.60/15.20/36.00/15.20
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 60.20/40.60/18.00/36.40/18.00
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 57.80/40.40/17.80/37.00/17.80
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 62.00/41.20/18.00/36.20/18.00
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 58.60/41.60/20.00/39.40/20.00
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 64.60/44.00/19.40/38.80/19.40
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 62.00/41.80/16.40/38.40/16.40
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 58.80/39.40/17.80/37.20/17.80
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 61.00/42.20/20.80/39.40/20.80
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 62.20/42.20/20.40/39.40/20.40
+Loaded 1842 labels
+Loaded 250000 preds
+orig/add/image/text/mean, n points=500: 57.20/38.80/15.20/34.80/15.20
