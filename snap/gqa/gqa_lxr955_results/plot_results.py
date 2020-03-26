@@ -21,10 +21,13 @@ def parse_args():
 def main():
     args = parse_args()
     with open(args.results) as f:
-        results = [x.strip().split()[-1].split('/')[:2] for x in f.readlines()]
-    results = [(float(x[0]), float(x[1])) for x in results]
+        results = [x.strip().split()[-1].split('/') for x in f.readlines()]
+    results = [(float(x[0]), float(x[1]), float(x[-1])) for x in results]
     orig_acc = np.array([r[0] for r in results])
     proj_acc = np.array([r[1] for r in results])
+    mean_acc = np.array([r[2] for r in results])
+    print('Orig acc: {:.2f}, proj acc: {:.2f}, const acc: {:.2f}'.format(
+        np.mean(orig_acc), np.mean(proj_acc), np.mean(mean_acc)))    
     orig_better = np.sum(orig_acc > proj_acc)
     plt.scatter(orig_acc, proj_acc)
     plt.plot([0, 100], [0, 100], linestyle='--', linewidth=3, color='r')

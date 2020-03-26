@@ -14,6 +14,16 @@ done;
 
 *****
 
+*****
+full popularity run:
+for model in {full,};
+ do for idx in {0..14};
+  do for lr in {.000001,.000005,.00001,.00005,.0001};
+   do CUDA_VISIBLE_DEVICES=1 python src/tasks/rank.py data/reddit_data/pics_split_$idx\.json.lxmert_train_json data/reddit_data/pics_split_$idx\.json.lxmert_val_json data/reddit_data/pics_split_$idx\.json.lxmert_test_json data/reddit_data/pics_bbox_features.tsv reddit_$model\_$idx --loadLXMERT snap/pretrained/model_LXRT.pth --model_type $model --lr $lr --epochs 6 --optimize_metric acc;
+   done;
+ done;
+done;
+*****
 
 *****
 full twitter run:
