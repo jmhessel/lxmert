@@ -113,7 +113,7 @@ class Rank:
                 predict = (logit > 0).float()
                 
                 for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
-                    instance_id2pred[instance_id] = {'label': l, 'scores': score}
+                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score}
 
             log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(instance_id2pred) * 100.)
 
@@ -121,7 +121,7 @@ class Rank:
                 valid_score = self.evaluate(eval_tuple)
                 if valid_score > best_valid:
                     best_valid = valid_score
-                    self.best_name = 'epoch_{}_valscore_{:.5f}'.format(epoch, valid_score * 100.)
+                    self.best_name = 'epoch_{}_valscore_{:.5f}_argshash_{}'.format(epoch, valid_score * 100., args.args_hash)
                     self.save(self.best_name)
 
                 log_str += "Epoch %d: Valid %0.2f\n" % (epoch, valid_score * 100.) + \
@@ -154,7 +154,7 @@ class Rank:
                 predict = (logit > 0).squeeze().float()
 
                 for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
-                    instance_id2pred[instance_id] = {'label': l, 'scores': score}
+                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score}
                 
         if dump is not None:
             evaluator.dump_result(instance_id2pred, dump)
@@ -172,7 +172,7 @@ class Rank:
         instance_id2pred = {}
         for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, logit_in, label) in enumerate(loader):
             for instance_id, l in zip(instance_ids, label.cpu().numpy()):
-                instance_id2pred[instance_id] = {'label': l}
+                instance_id2pred[instance_id] = {'label': float(l)}
         return evaluator.evaluate(instance_id2pred)
     
     def save(self, name):
@@ -186,6 +186,10 @@ class Rank:
 
 
 if __name__ == "__main__":
+
+    args_as_tuple = tuple(sorted({k: v for k, v in vars(args).items() if v is not None}.items()))
+    args_hash = hash(args_as_tuple)
+    args.args_hash = args_hash
 
     if not args.load_finetune and not args.load_lxmert:
         raise NotImplementedError(

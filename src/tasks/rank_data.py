@@ -227,7 +227,7 @@ class RankEvaluator:
                 datum = self.dataset.id2datum[cid]
                 result.append({
                     'instance_id': cid,
-                    'predicted_label': int(ans['answer'] > 0),
+                    'predicted_label': ans['label'],
                     'predicted_scores': list([float(x) for x in ans['scores']]),
                     'label': datum['label'],
                     'input': datum,
