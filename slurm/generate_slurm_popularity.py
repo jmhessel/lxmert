@@ -9,7 +9,7 @@ header = '''#!/bin/bash
 #SBATCH -e {NAME}.err                     # Name of stderr output log file (%j expands to jobID)
 #SBATCH -N 1                             # Total number of nodes requested
 #SBATCH -n 1                             # Total number of cores requested
-#SBATCH --mem=40000                      # Total amount of (real) memory requested (per node)
+#SBATCH --mem=32000                      # Total amount of (real) memory requested (per node)
 #SBATCH -t 168:00:00                     # Time limit (hh:mm:ss)
 #SBATCH --partition=default_gpu          # Request partition for resource allocation
 #SBATCH --gres=gpu:1                     # Specify a list of generic consumable resources (per node)
