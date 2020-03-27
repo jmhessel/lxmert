@@ -5,6 +5,8 @@ import json
 
 import numpy as np
 from torch.utils.data import Dataset
+import torch
+import eval_utils
 
 from finetune_param import args
 from utils import load_obj_tsv
@@ -20,7 +22,7 @@ def convert_example(ex):
     ex['img_id_0'] = ex['image0']
     ex['img_id_1'] = ex['image1']
     ex['instance_id'] = ex['pair_identifier']
-    ex['label'] = ex['label'] * 2 - 1
+    ex['label'] = float(ex['label'])
     del ex['image0']
     del ex['image1']
     del ex['pair_identifier']
@@ -35,7 +37,8 @@ class RankDataset:
       'image1': image identifier 0,
       'sent0': text of sentence 0,
       'sent1': text of sentence 1,
-      'label': 1 if (image0, sent0) better than (image1, sent1) image else 0
+      'label': 1 if (image0, sent0) better than (image1, sent1) image else 0,
+      (optionally) 'logit': logit from linear model
     }
     """
     def __init__(self, splits: str):
@@ -149,6 +152,12 @@ class RankTorchDataset(Dataset):
                 boxes = boxes[all_idxs]
                 print('resampled bboxes. this should be rare.')
 
+            # create logits
+            if 'logit' in datum and args.use_logits:
+                logit_in = torch.FloatTensor(datum['logit'])
+            else:
+                logit_in = torch.zeros(1)
+
             all_feats.append(feats)
             all_boxes.append(boxes)
 
@@ -158,38 +167,70 @@ class RankTorchDataset(Dataset):
         # Create target
         if 'label' in datum:
             label = datum['label']
-            return instance_id, f0, b0, f1, b1, sent0, sent1, label
+            return instance_id, f0, b0, f1, b1, sent0, sent1, logit_in, label
         else:
-            return instance_id, f0, b0, f1, b1, sent0, sent1
+            return instance_id, f0, b0, f1, b1, sent0, sent1, logit_in
 
 
 class RankEvaluator:
     def __init__(self, dataset: RankDataset):
         self.dataset = dataset
 
-    def evaluate(self, instance_id2ans: dict):
-        score = 0.
-        for instance_id, ans in instance_id2ans.items():
-            datum = self.dataset.id2datum[instance_id]
-            label = datum['label']
-            if ans == label:
-                score += 1
-        return score / len(instance_id2ans)
+    def evaluate(self, instance_id2ans: dict, return_full = False):
+        true_labels, predicted_labels, predicted_scores = [], [], []
+        for cid, pred in instance_id2ans.items():
+            datum = self.dataset.id2datum[cid]
+            true_labels.append(datum['label'])
+            predicted_labels.append(pred['label'])
+            if 'scores' in pred:
+                predicted_scores.append(pred['scores'])
+        true_labels = np.array(true_labels).astype(np.int32)
+        predicted_labels = np.array(predicted_labels)
 
+        if len(predicted_scores) == 0:
+            predicted_scores = predicted_labels
+        else:
+            predicted_scores = np.array(predicted_scores)
+        
+        predicted_labels = predicted_labels.astype(np.int32)
+        
+        res = eval_utils.get_metrics_binary(
+                predicted_scores, predicted_labels, true_labels)
+        if return_full:
+            return res
+        else:
+            return res[args.optimize_metric]
+
+        
     def dump_result(self, instance_id2ans: dict, path):
         """
         Dump the result to a prediction json of the following form:
-            results = [result]
+        results = {'per_instance': [result], 'metrics': metrics, 'args':args}
             result = {
-                "questionId": str,
-                "prediction": str
+                "instance_id": str,
+                "predicted_answer": str,
+                "predicted_label": str,
+                "answer": ground truth answer,
+                "label": ground truth label,
+                "predicted_scores": list of floats representing the logits for each class,
             }
+        metric is a dictionary of evaluation metrics.
         """
         with open(path, 'w') as f:
+            metrics = self.evaluate(instance_id2ans, return_full=True)
             result = []
-            for instance_id, ans in instance_id2ans.items():
+
+            for k, v in metrics.items():
+                metrics[k] = float(v)
+                
+            for cid, ans in instance_id2ans.items():
+                datum = self.dataset.id2datum[cid]
                 result.append({
-                    'instanceId': instance_id,
-                    'prediction': ans
+                    'instance_id': cid,
+                    'predicted_label': int(self.dataset.ans2label[ans['answer']]),
+                    'predicted_scores': list([float(x) for x in ans['scores']]),
+                    'label': datum['label'],
+                    'input': datum,
                 })
-            json.dump(result, f, indent=4, sort_keys=True)
+                
+            json.dump({'result': result, 'metrics': metrics, 'args':vars(args)}, f, indent=4, sort_keys=True)

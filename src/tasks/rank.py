@@ -62,7 +62,7 @@ class Rank:
         
         # Losses and optimizer, only if training
         if args.train_json != "-1":
-            self.rank_loss = nn.MarginRankingLoss(margin=1.0)
+            self.rank_loss = nn.BCEWithLogitsLoss()
             if 'bert' in args.optim:
                 batch_per_epoch = len(self.train_tuple.loader)
                 t_total = int(batch_per_epoch * args.epochs)
@@ -87,27 +87,33 @@ class Rank:
         best_valid = 0.
         for epoch in range(args.epochs):
             instance_id2pred = {}
-            for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, label) in iter_wrapper(enumerate(loader)):
+            for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, logit_in, label) in iter_wrapper(enumerate(loader)):
                 self.model.train()
                 self.optim.zero_grad()
                 f0, b0 = f0.cuda(), b0.cuda()
                 f1, b1 = f1.cuda(), b1.cuda()
 
                 label = label.cuda()
+                logit_in = logit_in.cuda()
+                
                 score0 = self.model(f0, b0, sent0)
                 score1 = self.model(f1, b1, sent1)
-                
-                loss = self.rank_loss(score0, score1, label)
+                logit = score0 - score1 + logit_in
+
+                if label.dim() == 1: #expand targets in binary mode
+                    assert logit.size(1) == 1
+                    label = label.unsqueeze(1)
+
+                loss = self.rank_loss(logit, label)
 
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
                 self.optim.step()
 
-                score = score0 - score1
-                predict = (score0 > score1) * 2 - 1
+                predict = (logit > 0).float()
                 
-                for instance_id, l in zip(instance_ids, predict.cpu().numpy()):
-                    instance_id2pred[instance_id] = l
+                for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
+                    instance_id2pred[instance_id] = {'label': l, 'scores': score}
 
             log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(instance_id2pred) * 100.)
 
@@ -134,7 +140,7 @@ class Rank:
         dset, loader, evaluator = eval_tuple
         instance_id2pred = {}
         for i, datum_tuple in enumerate(loader):
-            instance_ids, f0, b0, f1, b1, sent0, sent1 = datum_tuple[:-1]
+            instance_ids, f0, b0, f1, b1, sent0, sent1, logit_in = datum_tuple[:-1]
             with torch.no_grad():
                 f0, b0 = f0.cuda(), b0.cuda()
                 f1, b1 = f1.cuda(), b1.cuda()
@@ -142,11 +148,13 @@ class Rank:
                 score0 = self.model(f0, b0, sent0)
                 score1 = self.model(f1, b1, sent1)
 
-                score = score0 - score1
-                predict = ((score0 > score1) * 2 - 1).squeeze()
+                logit_in = logit_in.cuda()
                 
-                for instance_id, l in zip(instance_ids, predict.cpu().numpy()):
-                    instance_id2pred[instance_id] = int(l)
+                logit = score0 - score1 + logit_in
+                predict = (logit > 0).squeeze().float()
+
+                for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
+                    instance_id2pred[instance_id] = {'label': l, 'scores': score}
                 
         if dump is not None:
             evaluator.dump_result(instance_id2pred, dump)
@@ -162,9 +170,9 @@ class Rank:
     def oracle_score(data_tuple):
         dset, loader, evaluator = data_tuple
         instance_id2pred = {}
-        for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, label) in enumerate(loader):
+        for i, (instance_ids, f0, b0, f1, b1, sent0, sent1, logit_in, label) in enumerate(loader):
             for instance_id, l in zip(instance_ids, label.cpu().numpy()):
-                instance_id2pred[instance_id] = l
+                instance_id2pred[instance_id] = {'label': l}
         return evaluator.evaluate(instance_id2pred)
     
     def save(self, name):
