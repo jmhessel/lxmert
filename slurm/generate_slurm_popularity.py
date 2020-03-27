@@ -36,7 +36,7 @@ def main():
                     IDX=idx,
                     MODEL=model,
                     LR='{:.9f}'.format(lr))
-                rm_cmd = 'rm reddit_{MODEL}_{IDX}_{LR}/*.pth'
+                rm_cmd = 'rm reddit_{MODEL}_{IDX}_{LR}/*.pth'.format(MODEL=model, IDX=idx, LR=lr)
                 with open(fname, 'w') as f:
                     f.write(cur_header + '\n\n')
                     f.write('cd ..; ')
