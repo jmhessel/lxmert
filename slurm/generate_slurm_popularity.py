@@ -8,8 +8,8 @@ header = '''#!/bin/bash
 #SBATCH -o {NAME}.out                     # Name of stdout output log file (%j expands to jobID)
 #SBATCH -e {NAME}.err                     # Name of stderr output log file (%j expands to jobID)
 #SBATCH -N 1                             # Total number of nodes requested
-#SBATCH -n 4                             # Total number of cores requested
-#SBATCH --mem=45000                      # Total amount of (real) memory requested (per node)
+#SBATCH -n 1                             # Total number of cores requested
+#SBATCH --mem=40000                      # Total amount of (real) memory requested (per node)
 #SBATCH -t 168:00:00                     # Time limit (hh:mm:ss)
 #SBATCH --partition=default_gpu          # Request partition for resource allocation
 #SBATCH --gres=gpu:1                     # Specify a list of generic consumable resources (per node)
@@ -36,7 +36,7 @@ def main():
                     IDX=idx,
                     MODEL=model,
                     LR='{:.9f}'.format(lr))
-                rm_cmd = 'rm reddit_{MODEL}_{IDX}_{LR}/*.pth'.format(MODEL=model, IDX=idx, LR=lr)
+                rm_cmd = 'rm reddit_{MODEL}_{IDX}_{LR}/*.pth'.format(MODEL=model, IDX=idx, LR='{:.9f}'.format(lr))
                 with open(fname, 'w') as f:
                     f.write(cur_header + '\n\n')
                     f.write('cd ..; ')
