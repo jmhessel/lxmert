@@ -95,7 +95,7 @@ class Rank:
 
                 label = label.cuda()
                 logit_in = logit_in.cuda()
-                
+
                 score0 = self.model(f0, b0, sent0)
                 score1 = self.model(f1, b1, sent1)
                 logit = score0 - score1 + logit_in
