@@ -109,7 +109,7 @@ class Rank:
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
                 self.optim.step()
-
+                
                 predict = (logit > 0).float()
                 
                 for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
@@ -151,7 +151,7 @@ class Rank:
                 logit_in = logit_in.cuda()
                 
                 logit = score0 - score1 + logit_in
-                predict = (logit > 0).squeeze().float()
+                predict = (logit > 0).float()
 
                 for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
                     instance_id2pred[instance_id] = {'label': float(l), 'scores': score}
