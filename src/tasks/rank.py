@@ -49,7 +49,7 @@ class Rank:
         else:
             self.valid_tuple = None
 
-        self.model = RankModel()
+        self.model = RankModel(model_type=args.model_type)
 
         # Load pre-trained weights
         if args.load_lxmert is not None:

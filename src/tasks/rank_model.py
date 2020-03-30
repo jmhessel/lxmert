@@ -11,19 +11,26 @@ MAX_RANK_LENGTH = 40
 
 
 class RankModel(nn.Module):
-    def __init__(self):
+    def __init__(self, model_type='full'):
         super().__init__()
+        self.model_type = model_type
         self.lxrt_encoder = LXRTEncoder(
             args,
-            max_seq_length=MAX_RANK_LENGTH
+            max_seq_length=MAX_RANK_LENGTH,
+            model_type=args.model_type
         )
         self.hid_dim = hid_dim = self.lxrt_encoder.dim
-        self.logit_fc = nn.Sequential(
-            nn.Linear(hid_dim, hid_dim),
-            GeLU(),
-            BertLayerNorm(hid_dim, eps=1e-12),
-            nn.Linear(hid_dim, 1)
-        )
+        if self.model_type != 'concat':
+            self.logit_fc = nn.Sequential(
+                nn.Linear(hid_dim, hid_dim),
+                GeLU(),
+                BertLayerNorm(hid_dim, eps=1e-12),
+                nn.Linear(hid_dim, 1)
+            )
+        else:
+            self.logit_fc = nn.Sequential(
+                nn.Linear(hid_dim, 1),
+            )
         self.logit_fc.apply(self.lxrt_encoder.model.init_bert_weights)
 
 
