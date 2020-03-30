@@ -43,7 +43,7 @@ def main():
                     f.write(cmd + '; ' )
                     f.write(rm_cmd + '\n')
 
-    for model in ['full']:
+    for model in ['full', 'concat']:
         for idx in range(15):
             for lr in [.000001,.000005,.00001,.00005,.0001]:
                 fname = '{}logits_{}_{}.sub'.format(model, idx, lr)
