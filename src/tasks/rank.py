@@ -5,7 +5,7 @@ import os
 sys.path.append(os.getcwd() + '/src/')
 import json
 import collections
-
+import numpy as np
 from tqdm import tqdm
 import torch
 import torch.nn as nn
@@ -112,8 +112,8 @@ class Rank:
                 
                 predict = (logit > 0).float()
                 
-                for instance_id, l, score, c_score_0, c_score_1 in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy(), score0.detach().cpu().numpy(), score1.detatch().cpu().numpy()):
-                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score, 'score0':c_score_0, 'score1':c_score_1}
+                for instance_id, l, score, c_score_0, c_score_1 in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy(), score0.detach().cpu().numpy(), score1.detach().cpu().numpy()):
+                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score, 'score0':float(c_score_0[0]), 'score1':float(c_score_1[0])}
 
             log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(instance_id2pred) * 100.)
 
@@ -153,8 +153,9 @@ class Rank:
                 logit = score0 - score1 + logit_in
                 predict = (logit > 0).float()
 
-                for instance_id, l, score, c_score_0, c_score_1 in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy(), score0.detach().cpu().numpy(), score1.detatch().cpu().numpy()):
-                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score, 'score0':c_score_0, 'score1':c_score_1}
+                for instance_id, l, score, c_score_0, c_score_1 in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy(), score0.cpu().numpy(), score1.cpu().numpy()):
+                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score, 'score0':float(c_score_0[0]), 'score1':float(c_score_1[0])}
+                    
                                 
         if dump is not None:
             evaluator.dump_result(instance_id2pred, dump)

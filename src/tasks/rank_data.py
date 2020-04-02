@@ -231,7 +231,8 @@ class RankEvaluator:
                     'predicted_scores': list([float(x) for x in ans['scores']]),
                     'label': datum['label'],
                     'input': datum,
-                    'ans': ans
+                    'score0': ans['score0'],
+                    'score1': ans['score1']
                 })
                 
             json.dump({'result': result, 'metrics': metrics, 'args':vars(args)}, f, indent=4, sort_keys=True)
