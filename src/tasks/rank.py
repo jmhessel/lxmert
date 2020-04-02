@@ -112,8 +112,8 @@ class Rank:
                 
                 predict = (logit > 0).float()
                 
-                for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
-                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score}
+                for instance_id, l, score, c_score_0, c_score_1 in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy(), score0.detach().cpu().numpy(), score1.detatch().cpu().numpy()):
+                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score, 'score0':c_score_0, 'score1':c_score_1}
 
             log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(instance_id2pred) * 100.)
 
@@ -153,9 +153,9 @@ class Rank:
                 logit = score0 - score1 + logit_in
                 predict = (logit > 0).float()
 
-                for instance_id, l, score in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy()):
-                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score}
-                
+                for instance_id, l, score, c_score_0, c_score_1 in zip(instance_ids, predict.cpu().numpy(), logit.detach().cpu().numpy(), score0.detach().cpu().numpy(), score1.detatch().cpu().numpy()):
+                    instance_id2pred[instance_id] = {'label': float(l), 'scores': score, 'score0':c_score_0, 'score1':c_score_1}
+                                
         if dump is not None:
             evaluator.dump_result(instance_id2pred, dump)
         
