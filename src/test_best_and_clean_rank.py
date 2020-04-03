@@ -52,9 +52,9 @@ def main():
 
     best_model = args.checkpoint_dir + '/' + list(sorted(f2score.items(), key=lambda x: -x[1]))[0][0]
 
-    new_best_model = args.checkpoint_dir + '/' + 'BEST_' + best_model.split('/')[-1]
-    
-    call('cp {} {}'.format(best_model, new_best_model))
+    # we did this already in clean_all_but_best.py
+    #new_best_model = args.checkpoint_dir + '/' + 'BEST_' + best_model.split('/')[-1]
+    #call('cp {} {}'.format(best_model, new_best_model))
     best_model = new_best_model
     
     test_cmd = '/usr/local/bin/python3 src/tasks/{} -1 -1 {} {} {} --load_finetune {} --use_logits {} --model_type {} --batchSize 512'.format(
