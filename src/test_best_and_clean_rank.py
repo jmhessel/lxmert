@@ -55,7 +55,7 @@ def main():
     # we did this already in clean_all_but_best.py
     #new_best_model = args.checkpoint_dir + '/' + 'BEST_' + best_model.split('/')[-1]
     #call('cp {} {}'.format(best_model, new_best_model))
-    best_model = new_best_model
+    #best_model = new_best_model
     
     test_cmd = '/usr/local/bin/python3 src/tasks/{} -1 -1 {} {} {} --load_finetune {} --use_logits {} --model_type {} --batchSize 512'.format(
         args.script_name, args.test_file, args.image_features, args.checkpoint_dir, best_model, args.use_logits, args.model_type)
