@@ -139,7 +139,7 @@ class Rank:
         self.model.eval()
         dset, loader, evaluator = eval_tuple
         instance_id2pred = {}
-        for i, datum_tuple in enumerate(loader):
+        for i, datum_tuple in tqdm(enumerate(loader), total=len(loader)):
             instance_ids, f0, b0, f1, b1, sent0, sent1, logit_in = datum_tuple[:-1]
             with torch.no_grad():
                 f0, b0 = f0.cuda(), b0.cuda()
